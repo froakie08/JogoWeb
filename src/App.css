@@ -8,20 +8,23 @@ body, html {
 .game-container {
   width: 100vw;
   height: 100vh;
+  background: linear-gradient(to bottom, #3d1414, #1a0a0a);
   position: relative;
   overflow: hidden;
   font-family: 'Courier New', monospace;
   color: white;
-  
-  /* Configuração da Masmorra */
-  background-image: url('/background.png');
-  background-repeat: repeat-x;
-  /* Escala ajustada para a tocha bater na cabeça do Inimigo 2 */
-  background-size: auto 145%; 
-  background-position: center bottom;
 }
 
-/* Removida a linha vermelha antiga (::after) pois agora usamos o cenário */
+.game-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 80px;
+  background: #111;
+  border-top: 4px solid #8b0000;
+  z-index: 10;
+}
 
 .start-menu {
   position: absolute;
@@ -111,12 +114,12 @@ body, html {
   background-repeat: no-repeat;
   background-position: center;
   position: absolute;
+  bottom: 50px;
   z-index: 50;
-  /* Removido o drop-shadow amarelo para não parecer que brilha na masmorra escura */
-  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+  transition: transform 0.1s;
 }
 
-/* Mapeamento de Sprites */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
@@ -183,4 +186,10 @@ body, html {
   background: #ff0000;
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.overlay p {
+  font-size: 20px;
+  color: #ffd700;
+  margin-bottom: 10px;
 }

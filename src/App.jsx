@@ -41,8 +41,8 @@ function App() {
   const [maxHp, setMaxHp] = useState(100); 
   const [stamina, setStamina] = useState(100);
   const [maxStamina, setMaxStamina] = useState(100);
-  const [staminaRegenJump, setStaminaRegenJump] = useState(false);
-  const [isRegenBlocked, setIsRegenBlocked] = useState(false);
+  const [staminaRegenJump, setStaminaRegenJump] = useState(false); // Power-up
+  const [isRegenBlocked, setIsRegenBlocked] = useState(false); // Bloqueio temporário do salto
 
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
@@ -55,7 +55,25 @@ function App() {
   const [jumpFrame, setJumpFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
 
+  const levelAudioRef = useRef(null);
+  const bossAudioRef = useRef(null);
+  const defeatSoundRef = useRef(null);
+  const levelVictoryRef = useRef(null);
   const throwSoundRef = useRef(null);
+
+  useEffect(() => {
+    levelAudioRef.current = new Audio("./LevelMusic.mp3");
+    bossAudioRef.current = new Audio("./BossMusic.mp3");
+    defeatSoundRef.current = new Audio("./DefeatSound.wav");
+    levelVictoryRef.current = new Audio("./LevelVictory.mp3");
+    throwSoundRef.current = new Audio("./Throw.wav");
+    [levelAudioRef, bossAudioRef, defeatSoundRef, levelVictoryRef, throwSoundRef].forEach((ref) => {
+      if (ref.current) ref.current.volume = 0.5;
+    });
+    if (levelAudioRef.current) levelAudioRef.current.loop = true;
+    if (bossAudioRef.current) bossAudioRef.current.loop = true;
+  }, []);
+
   const keysPressed = useRef({});
   const posRef = useRef(pos);
   const posYRef = useRef(posY);
@@ -63,11 +81,6 @@ function App() {
 
   const GRAVITY = 1.8;
   const JUMP_FORCE = 28;
-  const GROUND_Y = 95; // Alinhado com o tijolo da masmorra
-
-  useEffect(() => {
-    throwSoundRef.current = new Audio("./Throw.wav");
-  }, []);
 
   useEffect(() => {
     posRef.current = pos;
@@ -127,16 +140,21 @@ function App() {
     setPosY(0);
   };
 
+  // --- REGENERAÇÃO ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
+    
     const reg = setInterval(() => {
+      // Regenera se: Tiver powerup OU não estiver com o bloco de salto ativo
       if (staminaRegenJump || !isRegenBlocked) {
         setStamina((s) => Math.min(s + 4, maxStamina));
       }
     }, 250);
+
     return () => clearInterval(reg);
   }, [gameStarted, hp, showLevelUp, gameVictory, maxStamina, staminaRegenJump, isRegenBlocked]);
 
+  // --- FÍSICA ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const physics = setInterval(() => {
@@ -157,26 +175,28 @@ function App() {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
 
+    // SALTO
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) { 
       setIsJumping(true); 
       setVelY(JUMP_FORCE); 
+      
       if (!staminaRegenJump) {
         setIsRegenBlocked(true);
         setTimeout(() => setIsRegenBlocked(false), 500);
       }
     }
 
-    // BLOQUEIO DE DISPARO NO AR (posYRef.current === 0)
-    if (e.key.toLowerCase() === "f" && stamina >= 25 && posYRef.current === 0) {
+    // DISPARO: BLOQUEADO NO AR (adicionada condição posY === 0)
+    if (e.key.toLowerCase() === "f" && stamina >= 25 && posY === 0) {
       if (throwSoundRef.current) {
         throwSoundRef.current.currentTime = 0;
         throwSoundRef.current.play().catch(() => {});
       }
       const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
-      setShurikens((prev) => [...prev, { id: Date.now() + Math.random(), x: startX, y: 14, dir: facingRef.current }]);
+      setShurikens((prev) => [...prev, { id: Date.now() + Math.random(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
       setStamina((s) => Math.max(s - 25, 0));
     }
-  }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory, staminaRegenJump]);
+  }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory, staminaRegenJump, posY]);
 
   const handleKeyUp = useCallback((e) => { keysPressed.current[e.key] = false; }, []);
 
@@ -186,6 +206,7 @@ function App() {
     return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
   }, [handleKeyDown, handleKeyUp]);
 
+  // --- ENGINE DE JOGO ---
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const engine = setInterval(() => {
@@ -200,12 +221,14 @@ function App() {
       setEnemies((prev) =>
         prev.map((enemy) => {
           if (enemy.hp <= 0) return enemy;
-          const now = Date.now();
-          if (now - enemy.lastFrameUpdate > 100) {
+          const tempoAgora = Date.now();
+          
+          if (tempoAgora - enemy.lastFrameUpdate > 100) {
             enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
-            enemy.lastFrameUpdate = now;
+            enemy.lastFrameUpdate = tempoAgora;
           }
-          if (enemy.isHurt && now - enemy.lastHurt > 600) { enemy.isHurt = false; enemy.currentFrame = 0; }
+          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 600) { enemy.isHurt = false; enemy.currentFrame = 0; }
+          
           let nX = enemy.x + (enemy.isHurt ? 0 : enemy.dir * enemy.speed);
           let nDir = enemy.dir;
           if (nX > window.innerWidth - 60) nDir = -1;
@@ -218,11 +241,12 @@ function App() {
             hitShurikenIds.push(coll.id);
             let nHp = enemy.hp - 34;
             if (nHp <= 0) setScore((s) => s + 100);
-            return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt: true, lastHurt: now, currentFrame: 0 };
+            return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt: true, lastHurt: tempoAgora, currentFrame: 0 };
           }
           return { ...enemy, x: nX, dir: nDir };
         })
       );
+
       setShurikens((prev) =>
         prev.filter((s) => !hitShurikenIds.includes(s.id))
           .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
@@ -232,6 +256,7 @@ function App() {
     return () => clearInterval(engine);
   }, [gameStarted, showLevelUp, gameVictory, shurikens]);
 
+  // --- ANIMAÇÕES ---
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
@@ -290,13 +315,13 @@ function App() {
 
           <div
             className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
-            style={{ left: `${pos}px`, bottom: `${GROUND_Y + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}
+            style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}
           ></div>
 
           {enemies.map((enemy) =>
             enemy.hp > 0 && (
-              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: `${GROUND_Y}px`, position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
-                <div style={{ background: "#333", width: "80px", height: "8px", marginBottom: "5px", border: '1px solid #000' }}>
+              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "70px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+                <div style={{ background: "#333", width: "80px", height: "8px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
                 </div>
                 <img 
@@ -311,14 +336,15 @@ function App() {
             )
           )}
 
-          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${GROUND_Y + 40 + s.y}px` }}></div>)}
+          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
 
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
+              <p>ESCOLHE UM POWER-UP PARA O NÍVEL 2:</p>
               <div className="powerup-container">
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA (BARRA MAIOR)</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA (BARRA MAIOR)</button>
                 <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")}>REGEN. INFINITA</button>
               </div>
             </div>
