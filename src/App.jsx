@@ -38,10 +38,11 @@ function App() {
 
   const [pos, setPos] = useState(window.innerWidth / 2 - 50);
   const [hp, setHp] = useState(100);
-  const [maxHp, setMaxHp] = useState(100); // Novo: Para o Power-up de Vida
+  const [maxHp, setMaxHp] = useState(100); 
   const [stamina, setStamina] = useState(100);
-  const [maxStamina, setMaxStamina] = useState(100); // Novo: Para o Power-up de Stamina
-  const [staminaRegenJump, setStaminaRegenJump] = useState(false); // Novo: Power-up Regeneração
+  const [maxStamina, setMaxStamina] = useState(100);
+  const [staminaRegenJump, setStaminaRegenJump] = useState(false);
+
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
   const [facing, setFacing] = useState(1);
@@ -119,11 +120,15 @@ function App() {
       for (let i = 0; i < countPerSide; i++) {
         const type = lvl === 1 ? 1 : (Math.random() > 0.5 ? 2 : 1);
         const spawnDistance = 450;
+        
+        // --- ALTERAÇÃO AQUI: HP DO TIPO 2 PARA 280 (8 TIROS) ---
+        const enemyHp = type === 1 ? 100 : 280;
+
         allEnemies.push({
           id: `enemy-${lvl}-${sideDir}-${i}`,
           x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
-          hp: type === 1 ? 100 : 150,
-          maxHp: type === 1 ? 100 : 150,
+          hp: enemyHp,
+          maxHp: enemyHp,
           dir: sideDir,
           speed: type === 1 ? 3 : 2.2,
           currentFrame: 0,
@@ -146,23 +151,17 @@ function App() {
     }
   }, [enemies, gameStarted, level, showLevelUp, gameVictory]);
 
-  // FUNÇÃO DE POWER-UP E PRÓXIMO NÍVEL
+  // --- NOVA FUNÇÃO DE POWERUP ---
   const applyPowerUpAndNextLevel = (type) => {
-    if (type === "stamina") {
-      setMaxStamina(150);
-      setStamina(150);
-    } else if (type === "health") {
-      setMaxHp(150);
-      setHp(150);
-    } else if (type === "regen") {
-      setStaminaRegenJump(true);
-      setHp(maxHp);
-      setStamina(maxStamina);
-    }
+    if (type === "stamina") setMaxStamina(150);
+    if (type === "health") setMaxHp(150);
+    if (type === "regen") setStaminaRegenJump(true);
 
     const nextLvl = level + 1;
     setLevel(nextLvl);
     setEnemies(generateEnemies(nextLvl));
+    setHp(type === "health" ? 150 : maxHp);
+    setStamina(type === "stamina" ? 150 : maxStamina);
     setShurikens([]);
     setShowLevelUp(false);
     setPos(window.innerWidth / 2 - 50);
@@ -198,11 +197,11 @@ function App() {
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     
-    // REGRA DE REGENERAÇÃO: Se tiver power-up, regenera sempre. Se não, apenas no chão.
+    // REGRA DE REGENERAÇÃO COM POWERUP
     const reg = setInterval(() => {
-      if (staminaRegenJump || posYRef.current === 0) {
-        setStamina((s) => Math.min(s + 4, maxStamina));
-      }
+        if (staminaRegenJump || posYRef.current === 0) {
+            setStamina((s) => Math.min(s + 4, maxStamina));
+        }
     }, 250);
 
     const physics = setInterval(() => {
@@ -328,11 +327,15 @@ function App() {
           <div className="stats-container">
             <div>
               <div className="bar-label">VIDA</div>
-              <div className="life-bar-outer"><div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div></div>
+              <div className="life-bar-outer">
+                <div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div>
+              </div>
             </div>
             <div>
               <div className="bar-label">STAMINA</div>
-              <div className="stamina-bar-outer"><div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div></div>
+              <div className="stamina-bar-outer">
+                <div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div>
+              </div>
             </div>
           </div>
 
@@ -378,7 +381,7 @@ function App() {
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
-              <p>ESCOLHE UM POWER-UP PARA CONTINUAR:</p>
+              <p>ESCOLHE UM POWER-UP:</p>
               <div className="powerup-container">
                 <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA</button>
                 <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA</button>
@@ -386,7 +389,6 @@ function App() {
               </div>
             </div>
           )}
-
           {hp <= 0 && (
             <div className="overlay">
               <h1>DERROTADO</h1>
