@@ -1,20 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import './App.css';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import "./App.css";
+import idleSprite from "./assets/Enemy1Idle.png";
+import hurtSprite from "./assets/Enemy1Hurt.png";
 
 function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [level, setLevel] = useState(1);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [gameVictory, setGameVictory] = useState(false);
-  
+
   const [pos, setPos] = useState(window.innerWidth / 2 - 50);
   const [hp, setHp] = useState(100);
   const [stamina, setStamina] = useState(100);
   const [score, setScore] = useState(0);
-  const [shurikens, setShurikens] = useState([]); 
-  const [enemyShurikens, setEnemyShurikens] = useState([]); 
+  const [shurikens, setShurikens] = useState([]);
+  const [enemyShurikens, setEnemyShurikens] = useState([]);
   const [facing, setFacing] = useState(1);
-  const [posY, setPosY] = useState(0); 
+  const [posY, setPosY] = useState(0);
   const [isJumping, setIsJumping] = useState(false);
   const [velY, setVelY] = useState(0);
 
@@ -24,12 +26,35 @@ function App() {
 
   const [boss, setBoss] = useState(null);
 
-  // --- REFERÊNCIAS DE ÁUDIO ---
-  const levelAudioRef = useRef(new Audio('/LevelMusic.mp3'));
-  const bossAudioRef = useRef(new Audio('/BossMusic.mp3'));
-  const defeatSoundRef = useRef(new Audio('/DefeatSound.wav'));
-  const levelVictoryRef = useRef(new Audio('/LevelVictory.mp3'));
-  const throwSoundRef = useRef(new Audio('/Throw.wav')); // Novo som de lançamento
+  // --- REFERÊNCIAS DE ÁUDIO (CORRIGIDO) ---
+  const levelAudioRef = useRef(null);
+  const bossAudioRef = useRef(null);
+  const defeatSoundRef = useRef(null);
+  const levelVictoryRef = useRef(null);
+  const throwSoundRef = useRef(null);
+
+  // Criar os áudios apenas UMA VEZ ao montar o componente
+  useEffect(() => {
+    levelAudioRef.current = new Audio("./LevelMusic.mp3");
+    bossAudioRef.current = new Audio("./BossMusic.mp3");
+    defeatSoundRef.current = new Audio("./DefeatSound.wav");
+    levelVictoryRef.current = new Audio("./LevelVictory.mp3");
+    throwSoundRef.current = new Audio("./Throw.wav");
+
+    // Forçar volume e garantir que carregam
+    [
+      levelAudioRef,
+      bossAudioRef,
+      defeatSoundRef,
+      levelVictoryRef,
+      throwSoundRef,
+    ].forEach((ref) => {
+      if (ref.current) ref.current.volume = 0.5;
+    });
+
+    levelAudioRef.current.loop = true;
+    bossAudioRef.current.loop = true;
+  }, []); // Os colchetes vazios garantem que isto só roda 1 vez
 
   const keysPressed = useRef({});
   const posRef = useRef(pos);
@@ -58,7 +83,10 @@ function App() {
       levelMusic.pause();
       bossMusic.pause();
     }
-    return () => { levelMusic.pause(); bossMusic.pause(); };
+    return () => {
+      levelMusic.pause();
+      bossMusic.pause();
+    };
   }, [gameStarted, level, hp, gameVictory, showLevelUp]);
 
   // 2. LÓGICA DE EFEITOS SONOROS (Vitória e Derrota)
@@ -86,29 +114,35 @@ function App() {
 
   const generateEnemies = (lvl) => {
     const isLevel1 = lvl === 1;
-    const countPerSide = isLevel1 ? 10 : 7; 
-    const totalShooters = lvl === 2 ? 7 : (lvl === 3 ? 4 : 0); 
-    
+    const countPerSide = isLevel1 ? 10 : 7;
+    const totalShooters = lvl === 2 ? 7 : lvl === 3 ? 4 : 0;
+
     let allEnemies = [];
     [1, -1].forEach((sideDir) => {
       for (let i = 0; i < countPerSide; i++) {
-        const spawnDistance = 450; 
+        const spawnDistance = 450;
         allEnemies.push({
           id: `minion-${lvl}-${sideDir}-${i}`,
-          x: sideDir === 1 ? -200 - (i * spawnDistance) : window.innerWidth + 200 + (i * spawnDistance),
+          x:
+            sideDir === 1
+              ? -200 - i * spawnDistance
+              : window.innerWidth + 200 + i * spawnDistance,
           hp: 100,
-          dir: sideDir, 
-          speed: (2 + Math.random() * 1.5) + (lvl * 0.3),
+          dir: sideDir,
+          speed: 2 + Math.random() * 1.5 + lvl * 0.3,
           canShoot: false,
-          lastShot: Date.now() + (Math.random() * 1000) 
+          lastShot: Date.now() + Math.random() * 1000,
         });
       }
     });
 
     if (totalShooters > 0) {
       const shuffled = [...allEnemies].sort(() => 0.5 - Math.random());
-      const shooterIds = shuffled.slice(0, totalShooters).map(e => e.id);
-      allEnemies = allEnemies.map(e => ({ ...e, canShoot: shooterIds.includes(e.id) }));
+      const shooterIds = shuffled.slice(0, totalShooters).map((e) => e.id);
+      allEnemies = allEnemies.map((e) => ({
+        ...e,
+        canShoot: shooterIds.includes(e.id),
+      }));
     }
     return allEnemies;
   };
@@ -117,14 +151,21 @@ function App() {
 
   useEffect(() => {
     if (level === 3 && gameStarted) {
-      setBoss({ hp: 1000, maxHp: 1000, x: window.innerWidth - 300, dir: -1, speed: 4, lastShot: Date.now() });
+      setBoss({
+        hp: 1000,
+        maxHp: 1000,
+        x: window.innerWidth - 300,
+        dir: -1,
+        speed: 4,
+        lastShot: Date.now(),
+      });
     } else {
       setBoss(null);
     }
   }, [level, gameStarted]);
 
   useEffect(() => {
-    const aliveEnemies = enemies.filter(e => e.hp > 0).length;
+    const aliveEnemies = enemies.filter((e) => e.hp > 0).length;
     if (gameStarted && !showLevelUp && !gameVictory) {
       if (level < 3 && aliveEnemies === 0) setShowLevelUp(true);
       else if (level === 3 && boss && boss.hp <= 0) setGameVictory(true);
@@ -135,14 +176,20 @@ function App() {
     const nextLvl = level + 1;
     setLevel(nextLvl);
     setEnemies(generateEnemies(nextLvl));
-    setHp(100); setStamina(100);
-    setShurikens([]); setEnemyShurikens([]);
+    setHp(100);
+    setStamina(100);
+    setShurikens([]);
+    setEnemyShurikens([]);
     setShowLevelUp(false);
-    setPos(window.innerWidth / 2 - 50); setPosY(0);
+    setPos(window.innerWidth / 2 - 50);
+    setPosY(0);
   };
 
   useEffect(() => {
-    const anim = setInterval(() => setIdleFrame(prev => (prev === 1 ? 2 : 1)), 500);
+    const anim = setInterval(
+      () => setIdleFrame((prev) => (prev === 1 ? 2 : 1)),
+      500
+    );
     return () => clearInterval(anim);
   }, []);
 
@@ -150,7 +197,10 @@ function App() {
     let jumpAnim;
     if (isJumping) {
       setJumpFrame(1);
-      jumpAnim = setInterval(() => setJumpFrame(prev => (prev < 12 ? prev + 1 : 12)), 60);
+      jumpAnim = setInterval(
+        () => setJumpFrame((prev) => (prev < 12 ? prev + 1 : 12)),
+        60
+      );
     }
     return () => clearInterval(jumpAnim);
   }, [isJumping]);
@@ -159,8 +209,9 @@ function App() {
     let runAnim;
     if (!isJumping && gameStarted && !showLevelUp) {
       runAnim = setInterval(() => {
-        const moving = keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"];
-        if (moving) setRunFrame(prev => (prev < 4 ? prev + 1 : 1));
+        const moving =
+          keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"];
+        if (moving) setRunFrame((prev) => (prev < 4 ? prev + 1 : 1));
         else setRunFrame(1);
       }, 100);
     }
@@ -169,55 +220,86 @@ function App() {
 
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    const reg = setInterval(() => setStamina(s => Math.min(s + 4, 100)), 250);
+    const reg = setInterval(() => setStamina((s) => Math.min(s + 4, 100)), 250);
     const physics = setInterval(() => {
-      setPosY(y => {
+      setPosY((y) => {
         if (y > 0 || velY !== 0) {
           let nextY = y + velY;
-          setVelY(v => v - GRAVITY);
-          if (nextY <= 0) { setVelY(0); setIsJumping(false); return 0; }
+          setVelY((v) => v - GRAVITY);
+          if (nextY <= 0) {
+            setVelY(0);
+            setIsJumping(false);
+            return 0;
+          }
           return nextY;
         }
         return 0;
       });
     }, 30);
-    return () => { clearInterval(reg); clearInterval(physics); };
+    return () => {
+      clearInterval(reg);
+      clearInterval(physics);
+    };
   }, [gameStarted, hp, velY, showLevelUp, gameVictory]);
 
-  const handleKeyDown = useCallback((e) => {
-    keysPressed.current[e.key] = true;
-    if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) {
-      setIsJumping(true); setVelY(JUMP_FORCE);
-    }
-    
-    // ATUALIZADO: Lógica de lançamento com som "Throw"
-    if (e.key.toLowerCase() === "f" && stamina >= 25) {
-      // Tocar som de lançamento
-      throwSoundRef.current.currentTime = 0;
-      throwSoundRef.current.play().catch(() => {});
+  const handleKeyDown = useCallback(
+    (e) => {
+      keysPressed.current[e.key] = true;
+      if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
+      if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) {
+        setIsJumping(true);
+        setVelY(JUMP_FORCE);
+      }
 
-      const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
-      setShurikens(prev => [...prev, { id: Date.now(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
-      setStamina(s => Math.max(s - 25, 0));
-    }
-  }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory]);
+      // ATUALIZADO: Lógica de lançamento com som "Throw"
+      if (e.key.toLowerCase() === "f" && stamina >= 25) {
+        // Tocar som de lançamento
+        throwSoundRef.current.currentTime = 0;
+        throwSoundRef.current.play().catch(() => {});
 
-  const handleKeyUp = useCallback((e) => { keysPressed.current[e.key] = false; }, []);
+        const startX =
+          facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
+        setShurikens((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            x: startX,
+            y: posYRef.current + 14,
+            dir: facingRef.current,
+          },
+        ]);
+        setStamina((s) => Math.max(s - 25, 0));
+      }
+    },
+    [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory]
+  );
+
+  const handleKeyUp = useCallback((e) => {
+    keysPressed.current[e.key] = false;
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [handleKeyDown, handleKeyUp]);
 
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const engine = setInterval(() => {
-      setPos(p => {
+      setPos((p) => {
         let newPos = p;
-        if (keysPressed.current["ArrowRight"]) { newPos = Math.min(p + 8, window.innerWidth - 110); setFacing(1); }
-        if (keysPressed.current["ArrowLeft"]) { newPos = Math.max(p - 8, 0); setFacing(-1); }
+        if (keysPressed.current["ArrowRight"]) {
+          newPos = Math.min(p + 8, window.innerWidth - 110);
+          setFacing(1);
+        }
+        if (keysPressed.current["ArrowLeft"]) {
+          newPos = Math.max(p - 8, 0);
+          setFacing(-1);
+        }
         return newPos;
       });
 
@@ -225,50 +307,104 @@ function App() {
       let newEnemyShurikens = [];
 
       if (level === 3 && boss) {
-        setBoss(prev => {
+        setBoss((prev) => {
           if (!prev || prev.hp <= 0) return prev;
-          let nX = prev.x + (prev.dir * prev.speed);
+          let nX = prev.x + prev.dir * prev.speed;
           let nDir = prev.dir;
           if (nX > window.innerWidth - 160) nDir = -1;
           if (nX < 100) nDir = 1;
-          if (Math.abs(nX - posRef.current) < 120 && posYRef.current < 150) setHp(h => Math.max(h - 1.5, 0));
+          if (Math.abs(nX - posRef.current) < 120 && posYRef.current < 150)
+            setHp((h) => Math.max(h - 1.5, 0));
           if (Date.now() - prev.lastShot > 800) {
-            newEnemyShurikens.push({ id: `boss-s-${Date.now()}`, x: nX + 75, y: 50, dir: posRef.current > nX ? 1 : -1 });
+            newEnemyShurikens.push({
+              id: `boss-s-${Date.now()}`,
+              x: nX + 75,
+              y: 50,
+              dir: posRef.current > nX ? 1 : -1,
+            });
             prev.lastShot = Date.now();
           }
-          const hit = shurikens.find(s => s.x > nX && s.x < nX + 150);
+          const hit = shurikens.find((s) => s.x > nX && s.x < nX + 150);
           let nHp = prev.hp;
-          if (hit) { hitShurikenIds.push(hit.id); nHp -= 20; }
+          if (hit) {
+            hitShurikenIds.push(hit.id);
+            nHp -= 20;
+          }
           return { ...prev, x: nX, dir: nDir, hp: nHp };
         });
       }
 
-      setEnemies(prev => prev.map(enemy => {
-        if (enemy.hp <= 0) return enemy;
-        let nX = enemy.x + (enemy.dir * enemy.speed);
-        let nDir = enemy.dir;
-        if (nX > window.innerWidth - 40) nDir = -1;
-        if (nX < 0) nDir = 1;
-        if (Math.abs(nX - posRef.current) < 55 && posYRef.current < 70) setHp(h => Math.max(h - 0.8, 0));
-        if (enemy.canShoot && Date.now() - enemy.lastShot > 1100) {
-          if (nX > -50 && nX < window.innerWidth + 50) {
-            newEnemyShurikens.push({ id: `es-${Date.now()}-${enemy.id}`, x: nX, y: 20, dir: nDir });
-            enemy.lastShot = Date.now();
-          }
-        }
-        const coll = shurikens.find(s => s.x > nX - 20 && s.x < nX + 50);
-        let nHp = enemy.hp;
-        if (coll) { hitShurikenIds.push(coll.id); nHp -= 34; if (nHp <= 0) setScore(s => s + 100); }
-        return { ...enemy, x: nX, dir: nDir, hp: nHp };
-      }));
+      setEnemies((prev) =>
+        prev.map((enemy) => {
+          if (enemy.hp <= 0) return enemy;
 
-      setShurikens(prev => prev.filter(s => !hitShurikenIds.includes(s.id)).map(s => ({ ...s, x: s.x + (25 * s.dir) })).filter(s => s.x > -100 && s.x < window.innerWidth + 100));
-      
-      setEnemyShurikens(prev => {
-        const moved = [...prev, ...newEnemyShurikens].map(s => ({ ...s, x: s.x + (14 * s.dir) }));
-        return moved.filter(s => {
-          const hitPlayer = Math.abs(s.x - (posRef.current + 40)) < 40 && (posYRef.current < 80);
-          if (hitPlayer) { setHp(h => Math.max(h - 6, 0)); return false; }
+          // 1. Lógica de Animação (muda o frame a cada X tempo)
+          const tempoAgora = Date.now();
+          if (!enemy.lastFrameUpdate) enemy.lastFrameUpdate = tempoAgora;
+          if (!enemy.currentFrame) enemy.currentFrame = 0;
+
+          if (tempoAgora - enemy.lastFrameUpdate > 100) {
+            // Velocidade da animação
+            const maxFrames = enemy.isHurt ? 4 : 6;
+            enemy.currentFrame = (enemy.currentFrame + 1) % maxFrames;
+            enemy.lastFrameUpdate = tempoAgora;
+          }
+
+          // 2. Lógica de Parar quando leva Hit
+          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 500) {
+            enemy.isHurt = false;
+          }
+
+          let nX = enemy.x;
+          let nDir = enemy.dir;
+
+          // SÓ ANDA se não estiver ferido (Hurt)
+          if (!enemy.isHurt) {
+            nX = enemy.x + enemy.dir * enemy.speed;
+            if (nX > window.innerWidth - 40) nDir = -1;
+            if (nX < 0) nDir = 1;
+          }
+
+          if (Math.abs(nX - posRef.current) < 55 && posYRef.current < 70)
+            setHp((h) => Math.max(h - 0.8, 0));
+
+          // 3. Lógica de levar dano da Shuriken
+          const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + 50);
+          let nHp = enemy.hp;
+          let isHurt = enemy.isHurt;
+          let lastHurt = enemy.lastHurt;
+
+          if (coll) {
+            hitShurikenIds.push(coll.id);
+            nHp -= 34;
+            isHurt = true;
+            lastHurt = tempoAgora;
+            if (nHp <= 0) setScore((s) => s + 100);
+          }
+
+          return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt, lastHurt };
+        })
+      );
+
+      setShurikens((prev) =>
+        prev
+          .filter((s) => !hitShurikenIds.includes(s.id))
+          .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
+          .filter((s) => s.x > -100 && s.x < window.innerWidth + 100)
+      );
+
+      setEnemyShurikens((prev) => {
+        const moved = [...prev, ...newEnemyShurikens].map((s) => ({
+          ...s,
+          x: s.x + 14 * s.dir,
+        }));
+        return moved.filter((s) => {
+          const hitPlayer =
+            Math.abs(s.x - (posRef.current + 40)) < 40 && posYRef.current < 80;
+          if (hitPlayer) {
+            setHp((h) => Math.max(h - 6, 0));
+            return false;
+          }
           return s.x > -100 && s.x < window.innerWidth + 100;
         });
       });
@@ -281,83 +417,210 @@ function App() {
       {!gameStarted ? (
         <div className="start-menu">
           <h1 className="title-glow">BREAKOUT</h1>
-          <button className="btn-start" onClick={() => setGameStarted(true)}>INICIAR FUGA</button>
+          <button className="btn-start" onClick={() => setGameStarted(true)}>
+            INICIAR FUGA
+          </button>
         </div>
       ) : (
         <>
           <div className="hud">
             <div>NÍVEL: {level}</div>
             <div className="hud-center">PONTOS: {score}</div>
-            <div>{level === 3 ? "BOSS FIGHT" : `INIMIGOS: ${enemies.filter(e => e.hp > 0).length}`}</div>
+            <div>
+              {level === 3
+                ? "BOSS FIGHT"
+                : `INIMIGOS: ${enemies.filter((e) => e.hp > 0).length}`}
+            </div>
           </div>
 
           {level === 3 && boss && boss.hp > 0 && (
             <div className="boss-hud">
               <div className="boss-name">MESTRE DAS SOMBRAS</div>
               <div className="boss-hp-outer">
-                <div className="boss-hp-fill" style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}></div>
+                <div
+                  className="boss-hp-fill"
+                  style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }}
+                ></div>
               </div>
             </div>
           )}
 
           <div className="stats-container">
-            <div><div className="bar-label">VIDA</div><div className="life-bar-outer"><div className="life-bar-fill" style={{ width: `${hp}%` }}></div></div></div>
-            <div><div className="bar-label">STAMINA</div><div className="stamina-bar-outer"><div className="stamina-bar-fill" style={{ width: `${stamina}%` }}></div></div></div>
+            <div>
+              <div className="bar-label">VIDA</div>
+              <div className="life-bar-outer">
+                <div
+                  className="life-bar-fill"
+                  style={{ width: `${hp}%` }}
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div className="bar-label">STAMINA</div>
+              <div className="stamina-bar-outer">
+                <div
+                  className="stamina-bar-fill"
+                  style={{ width: `${stamina}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
 
-          <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"]) ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`} 
-               style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing})` }}>
-          </div>
+          <div
+            className={`bashira ${
+              isJumping
+                ? `jump-frame-${jumpFrame}`
+                : keysPressed.current["ArrowRight"] ||
+                  keysPressed.current["ArrowLeft"]
+                ? `run-frame-${runFrame}`
+                : `frame-${idleFrame}`
+            }`}
+            style={{
+              left: `${pos}px`,
+              bottom: `${50 + posY}px`,
+              transform: `scaleX(${facing})`,
+            }}
+          ></div>
 
           {level === 3 && boss && boss.hp > 0 && (
-            <div className="boss-sprite" style={{ 
-                left: `${boss.x}px`, 
-                bottom: '50px', 
-                position: 'absolute',
+            <div
+              className="boss-sprite"
+              style={{
+                left: `${boss.x}px`,
+                bottom: "50px",
+                position: "absolute",
                 transform: `scaleX(${boss.dir * -1})`,
-                zIndex: 10 
-            }}>
-                <div className="boss-body" style={{ 
-                    width: '150px', height: '180px', background: '#1a1a1a', border: '4px solid #ff00ff', 
-                    boxShadow: '0 0 30px #ff00ff', borderRadius: '10px'
-                }}>
-                    <div style={{ color: '#ff00ff', textAlign: 'center', marginTop: '70px', fontWeight: 'bold' }}>BOSS</div>
+                zIndex: 10,
+              }}
+            >
+              <div
+                className="boss-body"
+                style={{
+                  width: "150px",
+                  height: "180px",
+                  background: "#1a1a1a",
+                  border: "4px solid #ff00ff",
+                  boxShadow: "0 0 30px #ff00ff",
+                  borderRadius: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#ff00ff",
+                    textAlign: "center",
+                    marginTop: "70px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  BOSS
                 </div>
+              </div>
             </div>
           )}
 
-          {enemies.map(enemy => (
-            enemy.hp > 0 && (
-              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: '80px', position: 'absolute', transform: `scaleX(${enemy.dir * -1})` }}>
-                 <div style={{ background: '#333', width: '40px', height: '5px', marginBottom: '5px' }}>
-                    <div style={{ background: 'red', height: '100%', width: `${enemy.hp}%` }}></div>
-                 </div>
-                 <div style={{ width: '40px', height: '60px', background: '#555', border: enemy.canShoot ? '2px solid #ff00ff' : '2px solid #000' }}></div>
-              </div>
-            )
-          ))}
+          {enemies.map(
+            (enemy) =>
+              enemy.hp > 0 && (
+                <div
+                  key={enemy.id}
+                  style={{
+                    left: `${enemy.x}px`,
+                    bottom: "80px",
+                    position: "absolute",
+                    transform: `scaleX(${enemy.dir * -1})`,
+                    zIndex: 100,
+                  }}
+                >
+                  {/* Barra de vida */}
+                  <div
+                    style={{
+                      background: "#333",
+                      width: "40px",
+                      height: "5px",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: "red",
+                        height: "100%",
+                        width: `${enemy.hp}%`,
+                      }}
+                    ></div>
+                  </div>
 
-          {shurikens.map(s => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
-          {enemyShurikens.map(s => <div key={s.id} className="shuriken enemy-shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px`, filter: 'hue-rotate(150deg) brightness(1.5)' }}></div>)}
+                  {/* O BONECO ANIMADO */}
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      backgroundImage: `url(${
+                        enemy.isHurt ? hurtSprite : idleSprite
+                      })`,
+                      // Se for HURT, a tira tem 4 frames (400%). Se for IDLE, tem 6 (600%)
+                      backgroundSize: enemy.isHurt ? "400% 100%" : "600% 100%",
+                      // Este é o cálculo que corta a imagem no sítio certo:
+                      backgroundPosition: `${
+                        (enemy.currentFrame || 0) *
+                        (100 / (enemy.isHurt ? 3 : 5))
+                      }% 0%`,
+                      imageRendering: "pixelated",
+                      backgroundRepeat: "no-repeat",
+                    }}
+                  ></div>
+                </div>
+              )
+          )}
+
+          {shurikens.map((s) => (
+            <div
+              key={s.id}
+              className="shuriken"
+              style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}
+            ></div>
+          ))}
+          {enemyShurikens.map((s) => (
+            <div
+              key={s.id}
+              className="shuriken enemy-shuriken"
+              style={{
+                left: `${s.x}px`,
+                bottom: `${90 + s.y}px`,
+                filter: "hue-rotate(150deg) brightness(1.5)",
+              }}
+            ></div>
+          ))}
 
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
-              <button className="btn-start" onClick={nextLevel}>ENTRAR NO NÍVEL {level + 1}</button>
+              <button className="btn-start" onClick={nextLevel}>
+                ENTRAR NO NÍVEL {level + 1}
+              </button>
             </div>
           )}
 
           {gameVictory && (
             <div className="overlay victory">
               <h1 className="title-glow">LIBERDADE!</h1>
-              <button className="btn-retry" onClick={() => window.location.reload()}>JOGAR NOVAMENTE</button>
+              <button
+                className="btn-retry"
+                onClick={() => window.location.reload()}
+              >
+                JOGAR NOVAMENTE
+              </button>
             </div>
           )}
 
           {hp <= 0 && (
             <div className="overlay">
               <h1>DERROTADO</h1>
-              <button className="btn-retry" onClick={() => window.location.reload()}>RECOMEÇAR</button>
+              <button
+                className="btn-retry"
+                onClick={() => window.location.reload()}
+              >
+                RECOMEÇAR
+              </button>
             </div>
           )}
         </>
