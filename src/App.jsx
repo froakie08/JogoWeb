@@ -111,27 +111,32 @@ function App() {
   }, [pos, posY, facing]);
 
   const generateEnemies = (lvl) => {
-    const countPerSide = lvl === 1 ? 10 : 7;
+    // Nível 1: 15 inimigos (aprox 7/8 por lado). Nível 2: 20 inimigos (10 por lado).
+    const countPerSide = lvl === 1 ? 8 : 10; 
     let allEnemies = [];
     [1, -1].forEach((sideDir) => {
       for (let i = 0; i < countPerSide; i++) {
+        // No nível 1, tipo é sempre 1. No nível 2, 50% de chance de ser tipo 1 ou 2.
+        const type = lvl === 1 ? 1 : (Math.random() > 0.5 ? 2 : 1);
         const spawnDistance = 450;
+        
         allEnemies.push({
           id: `enemy-${lvl}-${sideDir}-${i}`,
           x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
-          hp: lvl === 1 ? 100 : 150,
-          maxHp: lvl === 1 ? 100 : 150,
+          hp: type === 1 ? 100 : 150,
+          maxHp: type === 1 ? 100 : 150,
           dir: sideDir,
-          speed: lvl === 1 ? 3 : 2.2,
+          speed: type === 1 ? 3 : 2.2,
           currentFrame: 0,
           lastFrameUpdate: Date.now(),
           isHurt: false,
           lastHurt: 0,
-          type: lvl 
+          type: type 
         });
       }
     });
-    return allEnemies;
+    // Limitar o total exato para 15 no nível 1 se necessário
+    return lvl === 1 ? allEnemies.slice(0, 15) : allEnemies;
   };
 
   const [enemies, setEnemies] = useState(() => generateEnemies(1));

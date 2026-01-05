@@ -120,15 +120,12 @@ body, html {
   transition: transform 0.1s;
 }
 
-/* --- FRAMES BASHIRA (ASSETS) --- */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
-
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
 .bashira.run-frame-2 { background-image: url('./assets/Correr-2.png'); }
 .bashira.run-frame-3 { background-image: url('./assets/Correr-3.png'); }
 .bashira.run-frame-4 { background-image: url('./assets/Correr-4.png'); }
-
 .bashira.jump-frame-1 { background-image: url('./assets/FinalizadoSalto-1.png'); }
 .bashira.jump-frame-2 { background-image: url('./assets/FinalizadoSalto-2.png'); }
 .bashira.jump-frame-3 { background-image: url('./assets/FinalizadoSalto-3.png'); }
