@@ -41,8 +41,8 @@ function App() {
   const [maxHp, setMaxHp] = useState(100); 
   const [stamina, setStamina] = useState(100);
   const [maxStamina, setMaxStamina] = useState(100);
-  const [staminaRegenJump, setStaminaRegenJump] = useState(false); // Power-up
-  const [isRegenBlocked, setIsRegenBlocked] = useState(false); // Bloqueio temporário do salto
+  const [staminaRegenJump, setStaminaRegenJump] = useState(false); 
+  const [isRegenBlocked, setIsRegenBlocked] = useState(false); 
 
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
@@ -67,12 +67,22 @@ function App() {
     defeatSoundRef.current = new Audio("./DefeatSound.wav");
     levelVictoryRef.current = new Audio("./LevelVictory.mp3");
     throwSoundRef.current = new Audio("./Throw.wav");
+    
     [levelAudioRef, bossAudioRef, defeatSoundRef, levelVictoryRef, throwSoundRef].forEach((ref) => {
       if (ref.current) ref.current.volume = 0.5;
     });
+    
     if (levelAudioRef.current) levelAudioRef.current.loop = true;
     if (bossAudioRef.current) bossAudioRef.current.loop = true;
   }, []);
+
+  // FUNÇÃO PARA INICIAR O JOGO E DAR "PLAY" NOS AUDIOS (Resolve o problema do som)
+  const startGame = () => {
+    setGameStarted(true);
+    if (levelAudioRef.current) {
+      levelAudioRef.current.play().catch(e => console.log("Audio play blocked", e));
+    }
+  };
 
   const keysPressed = useRef({});
   const posRef = useRef(pos);
@@ -140,21 +150,16 @@ function App() {
     setPosY(0);
   };
 
-  // --- REGENERAÇÃO ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    
     const reg = setInterval(() => {
-      // Regenera se: Tiver powerup OU não estiver com o bloco de salto ativo
       if (staminaRegenJump || !isRegenBlocked) {
         setStamina((s) => Math.min(s + 4, maxStamina));
       }
     }, 250);
-
     return () => clearInterval(reg);
   }, [gameStarted, hp, showLevelUp, gameVictory, maxStamina, staminaRegenJump, isRegenBlocked]);
 
-  // --- FÍSICA ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const physics = setInterval(() => {
@@ -175,18 +180,16 @@ function App() {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
 
-    // SALTO
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) { 
       setIsJumping(true); 
       setVelY(JUMP_FORCE); 
-      
       if (!staminaRegenJump) {
         setIsRegenBlocked(true);
         setTimeout(() => setIsRegenBlocked(false), 500);
       }
     }
 
-    // DISPARO: BLOQUEADO NO AR (adicionada condição posY === 0)
+    // BLOQUEIO NO AR (posY === 0)
     if (e.key.toLowerCase() === "f" && stamina >= 25 && posY === 0) {
       if (throwSoundRef.current) {
         throwSoundRef.current.currentTime = 0;
@@ -206,7 +209,6 @@ function App() {
     return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
   }, [handleKeyDown, handleKeyUp]);
 
-  // --- ENGINE DE JOGO ---
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const engine = setInterval(() => {
@@ -222,20 +224,16 @@ function App() {
         prev.map((enemy) => {
           if (enemy.hp <= 0) return enemy;
           const tempoAgora = Date.now();
-          
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
             enemy.lastFrameUpdate = tempoAgora;
           }
           if (enemy.isHurt && tempoAgora - enemy.lastHurt > 600) { enemy.isHurt = false; enemy.currentFrame = 0; }
-          
           let nX = enemy.x + (enemy.isHurt ? 0 : enemy.dir * enemy.speed);
           let nDir = enemy.dir;
           if (nX > window.innerWidth - 60) nDir = -1;
           if (nX < 0) nDir = 1;
-
           if (Math.abs(nX - posRef.current) < 65 && posYRef.current < 70) setHp((h) => Math.max(h - 0.8, 0));
-
           const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + 80);
           if (coll && !hitShurikenIds.includes(coll.id)) {
             hitShurikenIds.push(coll.id);
@@ -246,7 +244,6 @@ function App() {
           return { ...enemy, x: nX, dir: nDir };
         })
       );
-
       setShurikens((prev) =>
         prev.filter((s) => !hitShurikenIds.includes(s.id))
           .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
@@ -256,7 +253,6 @@ function App() {
     return () => clearInterval(engine);
   }, [gameStarted, showLevelUp, gameVictory, shurikens]);
 
-  // --- ANIMAÇÕES ---
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
@@ -288,7 +284,7 @@ function App() {
       {!gameStarted ? (
         <div className="start-menu">
           <h1 className="title-glow">BREAKOUT</h1>
-          <button className="btn-start" onClick={() => setGameStarted(true)}>INICIAR FUGA</button>
+          <button className="btn-start" onClick={startGame}>INICIAR FUGA</button>
         </div>
       ) : (
         <>
