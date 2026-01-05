@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 
-// IMPORTAÇÃO DAS IMAGENS DO INIMIGO 1
+// --- IMPORTAÇÃO DAS IMAGENS DO INIMIGO 1 (6 imagens Idle, 4 imagens Hurt) ---
 import e1Idle0 from "./assets/sprite_idle0.png";
 import e1Idle1 from "./assets/sprite_idle1.png";
 import e1Idle2 from "./assets/sprite_idle2.png";
@@ -14,7 +14,7 @@ import e1Hurt1 from "./assets/sprite_hurt1.png";
 import e1Hurt2 from "./assets/sprite_hurt2.png";
 import e1Hurt3 from "./assets/sprite_hurt3.png";
 
-// Listas para facilitar a animação
+// Listas de animação
 const enemy1IdleFrames = [e1Idle0, e1Idle1, e1Idle2, e1Idle3, e1Idle4, e1Idle5];
 const enemy1HurtFrames = [e1Hurt0, e1Hurt1, e1Hurt2, e1Hurt3];
 
@@ -41,7 +41,6 @@ function App() {
 
   const [boss, setBoss] = useState(null);
 
-  // --- REFERÊNCIAS DE ÁUDIO ---
   const levelAudioRef = useRef(null);
   const bossAudioRef = useRef(null);
   const defeatSoundRef = useRef(null);
@@ -71,7 +70,6 @@ function App() {
   const GRAVITY = 1.8;
   const JUMP_FORCE = 25;
 
-  // Lógica de Música
   useEffect(() => {
     const levelMusic = levelAudioRef.current;
     const bossMusic = bossAudioRef.current;
@@ -110,10 +108,8 @@ function App() {
   }, [pos, posY, facing]);
 
   const generateEnemies = (lvl) => {
-    const isLevel1 = lvl === 1;
-    const countPerSide = isLevel1 ? 10 : 7;
+    const countPerSide = lvl === 1 ? 10 : 7;
     const totalShooters = lvl === 2 ? 7 : lvl === 3 ? 4 : 0;
-
     let allEnemies = [];
     [1, -1].forEach((sideDir) => {
       for (let i = 0; i < countPerSide; i++) {
@@ -133,15 +129,6 @@ function App() {
         });
       }
     });
-
-    if (totalShooters > 0) {
-      const shuffled = [...allEnemies].sort(() => 0.5 - Math.random());
-      const shooterIds = shuffled.slice(0, totalShooters).map((e) => e.id);
-      allEnemies = allEnemies.map((e) => ({
-        ...e,
-        canShoot: shooterIds.includes(e.id),
-      }));
-    }
     return allEnemies;
   };
 
@@ -176,13 +163,11 @@ function App() {
     setPosY(0);
   };
 
-  // Animação Bashira Parado
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
   }, []);
 
-  // Animação Salto
   useEffect(() => {
     let jumpAnim;
     if (isJumping) {
@@ -192,7 +177,6 @@ function App() {
     return () => clearInterval(jumpAnim);
   }, [isJumping]);
 
-  // Animação Correr
   useEffect(() => {
     let runAnim;
     if (!isJumping && gameStarted && !showLevelUp) {
@@ -205,7 +189,6 @@ function App() {
     return () => clearInterval(runAnim);
   }, [isJumping, gameStarted, showLevelUp]);
 
-  // Física de Salto e Stamina
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const reg = setInterval(() => setStamina((s) => Math.min(s + 4, 100)), 250);
@@ -214,11 +197,7 @@ function App() {
         if (y > 0 || velY !== 0) {
           let nextY = y + velY;
           setVelY((v) => v - GRAVITY);
-          if (nextY <= 0) {
-            setVelY(0);
-            setIsJumping(false);
-            return 0;
-          }
+          if (nextY <= 0) { setVelY(0); setIsJumping(false); return 0; }
           return nextY;
         }
         return 0;
@@ -230,10 +209,7 @@ function App() {
   const handleKeyDown = useCallback((e) => {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) {
-      setIsJumping(true);
-      setVelY(JUMP_FORCE);
-    }
+    if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) { setIsJumping(true); setVelY(JUMP_FORCE); }
     if (e.key.toLowerCase() === "f" && stamina >= 25) {
       throwSoundRef.current.currentTime = 0;
       throwSoundRef.current.play().catch(() => {});
@@ -243,9 +219,7 @@ function App() {
     }
   }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory]);
 
-  const handleKeyUp = useCallback((e) => {
-    keysPressed.current[e.key] = false;
-  }, []);
+  const handleKeyUp = useCallback((e) => { keysPressed.current[e.key] = false; }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -253,11 +227,9 @@ function App() {
     return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
   }, [handleKeyDown, handleKeyUp]);
 
-  // ENGINE DO JOGO
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const engine = setInterval(() => {
-      // Movimento Jogador
       setPos((p) => {
         let newPos = p;
         if (keysPressed.current["ArrowRight"]) { newPos = Math.min(p + 8, window.innerWidth - 110); setFacing(1); }
@@ -268,48 +240,22 @@ function App() {
       let hitShurikenIds = [];
       let newEnemyShurikens = [];
 
-      // Lógica Boss
-      if (level === 3 && boss) {
-        setBoss((prev) => {
-          if (!prev || prev.hp <= 0) return prev;
-          let nX = prev.x + prev.dir * prev.speed;
-          let nDir = prev.dir;
-          if (nX > window.innerWidth - 160) nDir = -1;
-          if (nX < 100) nDir = 1;
-          if (Math.abs(nX - posRef.current) < 120 && posYRef.current < 150) setHp((h) => Math.max(h - 1.5, 0));
-          if (Date.now() - prev.lastShot > 800) {
-            newEnemyShurikens.push({ id: `boss-s-${Date.now()}`, x: nX + 75, y: 50, dir: posRef.current > nX ? 1 : -1 });
-            prev.lastShot = Date.now();
-          }
-          const hit = shurikens.find((s) => s.x > nX && s.x < nX + 150);
-          let nHp = prev.hp;
-          if (hit) { hitShurikenIds.push(hit.id); nHp -= 20; }
-          return { ...prev, x: nX, dir: nDir, hp: nHp };
-        });
-      }
-
-      // Lógica Inimigos
       setEnemies((prev) =>
         prev.map((enemy) => {
           if (enemy.hp <= 0) return enemy;
           const tempoAgora = Date.now();
 
-          // Animação do Inimigo
+          // Animação com contagem correta (Idle: 6, Hurt: 4)
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
-            const maxFrames = enemy.isHurt ? 5 : 7;
+            const maxFrames = enemy.isHurt ? 4 : 6;
             enemy.currentFrame = (enemy.currentFrame + 1) % maxFrames;
             enemy.lastFrameUpdate = tempoAgora;
           }
 
-          // Recuperação do Dano
-          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 500) {
-            enemy.isHurt = false;
-            enemy.currentFrame = 0; // Reset ao voltar para idle
-          }
+          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 500) { enemy.isHurt = false; enemy.currentFrame = 0; }
 
           let nX = enemy.x;
           let nDir = enemy.dir;
-
           if (!enemy.isHurt) {
             nX = enemy.x + enemy.dir * enemy.speed;
             if (nX > window.innerWidth - 40) nDir = -1;
@@ -328,30 +274,18 @@ function App() {
             nHp -= 34;
             isHurt = true;
             lastHurt = tempoAgora;
-            enemy.currentFrame = 0; // Começa a animação de dano do início
+            enemy.currentFrame = 0;
             if (nHp <= 0) setScore((s) => s + 100);
           }
-
           return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt, lastHurt };
         })
       );
 
-      // Shurikens Jogador
       setShurikens((prev) =>
         prev.filter((s) => !hitShurikenIds.includes(s.id))
           .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
           .filter((s) => s.x > -100 && s.x < window.innerWidth + 100)
       );
-
-      // Shurikens Inimigos
-      setEnemyShurikens((prev) => {
-        const moved = [...prev, ...newEnemyShurikens].map((s) => ({ ...s, x: s.x + 14 * s.dir }));
-        return moved.filter((s) => {
-          const hitPlayer = Math.abs(s.x - (posRef.current + 40)) < 40 && posYRef.current < 80;
-          if (hitPlayer) { setHp((h) => Math.max(h - 6, 0)); return false; }
-          return s.x > -100 && s.x < window.innerWidth + 100;
-        });
-      });
     }, 1000 / 60);
     return () => clearInterval(engine);
   }, [gameStarted, showLevelUp, gameVictory, level, boss, shurikens]);
@@ -368,7 +302,7 @@ function App() {
           <div className="hud">
             <div>NÍVEL: {level}</div>
             <div className="hud-center">PONTOS: {score}</div>
-            <div>{level === 3 ? "BOSS FIGHT" : `INIMIGOS: ${enemies.filter((e) => e.hp > 0).length}`}</div>
+            <div>INIMIGOS: {enemies.filter((e) => e.hp > 0).length}</div>
           </div>
 
           <div className="stats-container">
@@ -382,42 +316,38 @@ function App() {
             </div>
           </div>
 
-          {/* JOGADOR (BASHIRA) */}
           <div
             className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
             style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing})` }}
           ></div>
 
-          {/* INIMIGOS */}
           {enemies.map((enemy) =>
             enemy.hp > 0 && (
-              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "80px", position: "absolute", transform: `scaleX(${enemy.dir * -1})`, zIndex: 100 }}>
+              <div key={enemy.id} style={{ 
+                left: `${enemy.x}px`, 
+                bottom: "80px", 
+                position: "absolute", 
+                // AQUI RESOLVEMOS O ANDAR DE COSTAS:
+                transform: `scaleX(${enemy.dir})`, 
+                zIndex: 100 
+              }}>
                 <div style={{ background: "#333", width: "40px", height: "5px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${enemy.hp}%` }}></div>
                 </div>
                 <img 
-                  src={enemy.isHurt ? enemy1HurtFrames[enemy.currentFrame % 5] : enemy1IdleFrames[enemy.currentFrame % 7]}
+                  src={enemy.isHurt ? enemy1HurtFrames[enemy.currentFrame % 4] : enemy1IdleFrames[enemy.currentFrame % 6]}
                   style={{ width: "80px", height: "auto", imageRendering: "pixelated" }}
                 />
               </div>
             )
           )}
 
-          {/* SHURIKENS */}
           {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
-          {enemyShurikens.map((s) => <div key={s.id} className="shuriken enemy-shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px`, filter: "hue-rotate(150deg) brightness(1.5)" }}></div>)}
 
-          {/* MENUS OVERLAY */}
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
               <button className="btn-start" onClick={nextLevel}>ENTRAR NO NÍVEL {level + 1}</button>
-            </div>
-          )}
-          {gameVictory && (
-            <div className="overlay victory">
-              <h1 className="title-glow">LIBERDADE!</h1>
-              <button className="btn-retry" onClick={() => window.location.reload()}>JOGAR NOVAMENTE</button>
             </div>
           )}
           {hp <= 0 && (
