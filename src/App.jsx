@@ -537,7 +537,7 @@ function App() {
                       background: "#333",
                       width: "40px",
                       height: "5px",
-                      marginBottom: "2px",
+                      marginBottom: "5px",
                     }}
                   >
                     <div
@@ -549,25 +549,29 @@ function App() {
                     ></div>
                   </div>
 
-                  {/* O BONECO ANIMADO */}
+                  {/* JANELA QUE MOSTRA O BONECO */}
                   <div
                     style={{
-                      width: "32px",
-                      height: "32px",
-                      backgroundImage: `url(${
-                        enemy.isHurt ? hurtSprite : idleSprite
-                      })`,
-                      // Se for HURT, a tira tem 4 frames (400%). Se for IDLE, tem 6 (600%)
-                      backgroundSize: enemy.isHurt ? "400% 100%" : "600% 100%",
-                      // Este é o cálculo que corta a imagem no sítio certo:
-                      backgroundPosition: `${
-                        (enemy.currentFrame || 0) *
-                        (100 / (enemy.isHurt ? 3 : 5))
-                      }% 0%`,
-                      imageRendering: "pixelated",
-                      backgroundRepeat: "no-repeat",
+                      width: "64px", // Largura da janela (tamanho do boneco)
+                      height: "64px", // Altura da janela
+                      overflow: "hidden", // ESCONDE o resto da tira
+                      position: "relative",
+                      border: "1px solid transparent", // Só para garantir o alinhamento
                     }}
-                  ></div>
+                  >
+                    <img
+                      src={enemy.isHurt ? hurtSprite : idleSprite}
+                      style={{
+                        height: "64px", // A tira fica com a altura da janela
+                        position: "absolute",
+                        // ESTE É O TRUQUE: Move a tira para a esquerda em saltos de 64px
+                        left: `-${(enemy.currentFrame || 0) * 64}px`,
+                        top: 0,
+                        imageRendering: "pixelated",
+                        maxWidth: "none", // Impede que o CSS encolha a imagem
+                      }}
+                    />
+                  </div>
                 </div>
               )
           )}
