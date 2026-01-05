@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 
-// --- INIMIGO 1 (RED) ---
+// --- IMPORTAÇÕES DE ASSETS (Mantém as tuas exatamente como estão) ---
 import e1Idle0 from "./assets/sprite_idle0.png";
 import e1Idle1 from "./assets/sprite_idle1.png";
 import e1Idle2 from "./assets/sprite_idle2.png";
@@ -13,7 +13,6 @@ import e1Hurt1 from "./assets/sprite_hurt1.png";
 import e1Hurt2 from "./assets/sprite_hurt2.png";
 import e1Hurt3 from "./assets/sprite_hurt3.png";
 
-// --- INIMIGO 2 (YELLOW NINJA) ---
 import e2Walk0 from "./assets/yellowninjawalk0.png";
 import e2Walk1 from "./assets/yellowninjawalk1.png";
 import e2Walk2 from "./assets/yellowninjawalk2.png";
@@ -35,40 +34,32 @@ function App() {
   const [level, setLevel] = useState(1);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [gameVictory, setGameVictory] = useState(false);
-
   const [pos, setPos] = useState(window.innerWidth / 2 - 50);
   const [hp, setHp] = useState(100);
   const [stamina, setStamina] = useState(100);
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
+  const [enemies, setEnemies] = useState([]);
   const [facing, setFacing] = useState(1);
   const [posY, setPosY] = useState(0);
   const [isJumping, setIsJumping] = useState(false);
   const [velY, setVelY] = useState(0);
-
   const [idleFrame, setIdleFrame] = useState(1);
   const [jumpFrame, setJumpFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
 
   const levelAudioRef = useRef(null);
-  const bossAudioRef = useRef(null);
-  const defeatSoundRef = useRef(null);
-  const levelVictoryRef = useRef(null);
   const throwSoundRef = useRef(null);
-
-  useEffect(() => {
-    levelAudioRef.current = new Audio("./LevelMusic.mp3");
-    bossAudioRef.current = new Audio("./BossMusic.mp3");
-    defeatSoundRef.current = new Audio("./DefeatSound.wav");
-    levelVictoryRef.current = new Audio("./LevelVictory.mp3");
-    throwSoundRef.current = new Audio("./Throw.wav");
-    if (levelAudioRef.current) levelAudioRef.current.loop = true;
-  }, []);
-
   const keysPressed = useRef({});
   const posRef = useRef(pos);
   const posYRef = useRef(posY);
   const facingRef = useRef(facing);
+
+  useEffect(() => {
+    levelAudioRef.current = new Audio("./LevelMusic.mp3");
+    throwSoundRef.current = new Audio("./Throw.wav");
+    if (levelAudioRef.current) levelAudioRef.current.loop = true;
+  }, []);
 
   useEffect(() => {
     posRef.current = pos;
@@ -97,15 +88,16 @@ function App() {
         });
       }
     });
-    return lvl === 1 ? allEnemies.slice(0, 15) : allEnemies;
+    const final = lvl === 1 ? allEnemies.slice(0, 15) : allEnemies;
+    setEnemies(final);
   };
 
-  const [enemies, setEnemies] = useState(() => generateEnemies(1));
+  useEffect(() => { if(gameStarted) generateEnemies(level); }, [gameStarted]);
 
   const nextLevel = () => {
     const nextLvl = level + 1;
     setLevel(nextLvl);
-    setEnemies(generateEnemies(nextLvl));
+    generateEnemies(nextLvl);
     setHp(100);
     setStamina(100);
     setShurikens([]);
@@ -114,7 +106,6 @@ function App() {
     setPosY(0);
   };
 
-  // Animações simples
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
@@ -157,29 +148,32 @@ function App() {
     return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
   }, [handleKeyDown, handleKeyUp]);
 
-  // ENGINE PRINCIPAL
+  // ENGINE PRINCIPAL - TUDO ACONTECE AQUI
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
 
     const engine = setInterval(() => {
-      // 1. Mover Jogador
+      // 1. Jogador
       setPos((p) => {
         if (keysPressed.current["ArrowRight"]) { setFacing(1); return Math.min(p + 8, window.innerWidth - 110); }
         if (keysPressed.current["ArrowLeft"]) { setFacing(-1); return Math.max(p - 8, 0); }
         return p;
       });
 
-      // 2. Processar Shurikens e Inimigos em conjunto
-      setShurikens((prevShurikens) => {
-        const movedShurikens = prevShurikens.map(s => ({ ...s, x: s.x + 25 * s.dir }));
-        const shurikensToRemove = new Set();
+      // 2. Lógica Unificada de Inimigos e Shurikens
+      setEnemies((prevEnemies) => {
+        let currentEnemies = [...prevEnemies];
+        let shurikensHit = [];
 
-        setEnemies((prevEnemies) => {
-          const now = Date.now();
-          const newEnemies = prevEnemies.map(enemy => {
+        setShurikens((prevShurikens) => {
+          let currentShurikens = prevShurikens.map(s => ({ ...s, x: s.x + 25 * s.dir }));
+          
+          // Verificar cada inimigo contra cada shuriken
+          currentEnemies = currentEnemies.map(enemy => {
             if (enemy.hp <= 0) return enemy;
+            const now = Date.now();
 
-            // Animação e Movimento do Inimigo
+            // Movimento/Animação
             if (now - enemy.lastFrameUpdate > 100) {
               enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
               enemy.lastFrameUpdate = now;
@@ -192,33 +186,36 @@ function App() {
             // Dano no Jogador
             if (Math.abs(nX - posRef.current) < 60 && posYRef.current < 70) setHp(h => Math.max(h - 0.5, 0));
 
-            // COLISÃO: Verificar se alguma shuriken toca neste inimigo
+            // Colisão Real
             let nHp = enemy.hp;
             let isHurt = enemy.isHurt;
             let lastHurt = enemy.lastHurt;
 
-            movedShurikens.forEach(s => {
-              if (!shurikensToRemove.has(s.id) && s.x > nX - 20 && s.x < nX + 80) {
-                shurikensToRemove.add(s.id); // Marca para remover
-                nHp -= 34; // Dano fixo
+            for (let i = 0; i < currentShurikens.length; i++) {
+              let s = currentShurikens[i];
+              // Se a shuriken ainda não bateu em nada e está na área do inimigo
+              if (!shurikensHit.includes(s.id) && s.x > nX - 20 && s.x < nX + 80) {
+                shurikensHit.push(s.id); // Matamos a shuriken aqui
+                nHp -= 34;
                 isHurt = true;
                 lastHurt = now;
                 enemy.currentFrame = 0;
                 if (nHp <= 0) setScore(sc => sc + 100);
+                break; // Um inimigo só pode ser atingido por UMA shuriken por frame
               }
-            });
-
+            }
             return { ...enemy, x: nX, hp: nHp, isHurt, lastHurt };
           });
 
-          // Verificar Level Up
-          if (newEnemies.filter(e => e.hp > 0).length === 0 && !showLevelUp) setShowLevelUp(true);
-          
-          return newEnemies;
+          // Filtramos as shurikens que bateram e as que saíram do ecrã
+          return currentShurikens.filter(s => !shurikensHit.includes(s.id) && s.x > -100 && s.x < window.innerWidth + 100);
         });
 
-        // Retornar shurikens que não bateram e estão na tela
-        return movedShurikens.filter(s => !shurikensToRemove.has(s.id) && s.x > -100 && s.x < window.innerWidth + 100);
+        if (currentEnemies.length > 0 && currentEnemies.filter(e => e.hp > 0).length === 0 && !showLevelUp) {
+            setShowLevelUp(true);
+        }
+
+        return currentEnemies;
       });
 
     }, 1000 / 60);
