@@ -162,3 +162,34 @@ body, html {
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+.powerup-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.btn-powerup {
+  padding: 10px 25px;
+  background: #8b0000;
+  color: white;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  border: 3px solid #ffd700;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: 0.2s;
+}
+
+.btn-powerup:hover {
+  background: #ff0000;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.overlay p {
+  font-size: 20px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
