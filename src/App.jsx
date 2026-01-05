@@ -41,8 +41,8 @@ function App() {
   const [maxHp, setMaxHp] = useState(100); 
   const [stamina, setStamina] = useState(100);
   const [maxStamina, setMaxStamina] = useState(100);
-  const [staminaRegenJump, setStaminaRegenJump] = useState(false); // Power-up
-  const [isRegenBlocked, setIsRegenBlocked] = useState(false); // Bloqueio temporário do salto
+  const [staminaRegenJump, setStaminaRegenJump] = useState(false);
+  const [isRegenBlocked, setIsRegenBlocked] = useState(false);
 
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
@@ -81,6 +81,7 @@ function App() {
 
   const GRAVITY = 1.8;
   const JUMP_FORCE = 28;
+  const GROUND_Y = 115; // A nova base em cima do tijolo
 
   useEffect(() => {
     posRef.current = pos;
@@ -140,21 +141,16 @@ function App() {
     setPosY(0);
   };
 
-  // --- REGENERAÇÃO ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    
     const reg = setInterval(() => {
-      // Regenera se: Tiver powerup OU não estiver com o bloco de salto ativo
       if (staminaRegenJump || !isRegenBlocked) {
         setStamina((s) => Math.min(s + 4, maxStamina));
       }
     }, 250);
-
     return () => clearInterval(reg);
   }, [gameStarted, hp, showLevelUp, gameVictory, maxStamina, staminaRegenJump, isRegenBlocked]);
 
-  // --- FÍSICA ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const physics = setInterval(() => {
@@ -174,19 +170,14 @@ function App() {
   const handleKeyDown = useCallback((e) => {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-
-    // SALTO: Adicionada a condição de bloquear regen por 0.5s
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) { 
       setIsJumping(true); 
       setVelY(JUMP_FORCE); 
-      
-      // Só bloqueia se NÃO tiver o power-up de regen infinita
       if (!staminaRegenJump) {
         setIsRegenBlocked(true);
         setTimeout(() => setIsRegenBlocked(false), 500);
       }
     }
-
     if (e.key.toLowerCase() === "f" && stamina >= 25) {
       if (throwSoundRef.current) {
         throwSoundRef.current.currentTime = 0;
@@ -206,7 +197,6 @@ function App() {
     return () => { window.removeEventListener("keydown", handleKeyDown); window.removeEventListener("keyup", handleKeyUp); };
   }, [handleKeyDown, handleKeyUp]);
 
-  // --- ENGINE DE JOGO (Colisões e Movimento) ---
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const engine = setInterval(() => {
@@ -222,13 +212,11 @@ function App() {
         prev.map((enemy) => {
           if (enemy.hp <= 0) return enemy;
           const tempoAgora = Date.now();
-          
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
             enemy.lastFrameUpdate = tempoAgora;
           }
           if (enemy.isHurt && tempoAgora - enemy.lastHurt > 600) { enemy.isHurt = false; enemy.currentFrame = 0; }
-          
           let nX = enemy.x + (enemy.isHurt ? 0 : enemy.dir * enemy.speed);
           let nDir = enemy.dir;
           if (nX > window.innerWidth - 60) nDir = -1;
@@ -246,7 +234,6 @@ function App() {
           return { ...enemy, x: nX, dir: nDir };
         })
       );
-
       setShurikens((prev) =>
         prev.filter((s) => !hitShurikenIds.includes(s.id))
           .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
@@ -256,7 +243,6 @@ function App() {
     return () => clearInterval(engine);
   }, [gameStarted, showLevelUp, gameVictory, shurikens]);
 
-  // --- ANIMAÇÕES ---
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
@@ -315,12 +301,12 @@ function App() {
 
           <div
             className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
-            style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}
+            style={{ left: `${pos}px`, bottom: `${GROUND_Y + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}
           ></div>
 
           {enemies.map((enemy) =>
             enemy.hp > 0 && (
-              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "70px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+              <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: `${GROUND_Y}px`, position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
                 <div style={{ background: "#333", width: "80px", height: "8px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
                 </div>
@@ -336,15 +322,14 @@ function App() {
             )
           )}
 
-          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
+          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${GROUND_Y + 40 + s.y}px` }}></div>)}
 
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
-              <p>ESCOLHE UM POWER-UP PARA O NÍVEL 2:</p>
               <div className="powerup-container">
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA (BARRA MAIOR)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA (BARRA MAIOR)</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA</button>
                 <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")}>REGEN. INFINITA</button>
               </div>
             </div>

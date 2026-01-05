@@ -200,22 +200,20 @@ body, html {
   position: relative;
   overflow: hidden;
   
-  /* Configuração do Fundo */
-  background-image: url('../public/background.png');
-  background-repeat: repeat-x; /* Repete horizontalmente criando o corredor */
-  background-position: bottom center; /* Alinha a base da imagem ao fundo do ecrã */
+  /* Fundo da Masmorra */
+  background-image: url('/background.png');
+  background-repeat: repeat-x;
   
-  /* AJUSTE DE ESCALA: */
-  /* Ajustamos o background-size para que a altura da masmorra force o chão */
-  /* a alinhar com os 50px/70px que definimos no código para o Bashira e inimigos */
-  background-size: auto 120%; 
+  /* ESCALA: Aumentar a % da altura faz os elementos da imagem parecerem menores */
+  /* 160% deve colocar a tocha na linha azul que desenhaste */
+  background-size: auto 160%; 
   
-  background-color: #0a0a0a; /* Fundo de segurança caso a imagem falhe */
+  /* POSICIONAMENTO: Alinha a imagem para que o tijolo de baixo fique na base */
+  background-position: center bottom;
+  background-color: #1a1a1a;
 }
 
-/* Ajuste fino do chão */
-/* Como no teu App.jsx os inimigos estão a "bottom: 70px", 
-   ajustamos a posição do fundo para o tijolo coincidir. */
-.game-container {
-  background-position-y: calc(100% + 20px); 
+/* Removemos qualquer borda ou linha vermelha residual */
+.bashira, .shuriken {
+  border: none !important;
 }
