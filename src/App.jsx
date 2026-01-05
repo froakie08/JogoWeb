@@ -1,21 +1,35 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 
-// --- IMPORTAÇÃO DAS IMAGENS DO INIMIGO 1 ---
+// --- INIMIGO 1 (RED) ---
 import e1Idle0 from "./assets/sprite_idle0.png";
 import e1Idle1 from "./assets/sprite_idle1.png";
 import e1Idle2 from "./assets/sprite_idle2.png";
 import e1Idle3 from "./assets/sprite_idle3.png";
 import e1Idle4 from "./assets/sprite_idle4.png";
 import e1Idle5 from "./assets/sprite_idle5.png";
-
 import e1Hurt0 from "./assets/sprite_hurt0.png";
 import e1Hurt1 from "./assets/sprite_hurt1.png";
 import e1Hurt2 from "./assets/sprite_hurt2.png";
 import e1Hurt3 from "./assets/sprite_hurt3.png";
 
+// --- INIMIGO 2 (YELLOW NINJA) ---
+import e2Walk0 from "./assets/yellowninjawalk0.png";
+import e2Walk1 from "./assets/yellowninjawalk1.png";
+import e2Walk2 from "./assets/yellowninjawalk2.png";
+import e2Walk3 from "./assets/yellowninjawalk3.png";
+import e2Walk4 from "./assets/yellowninjawalk4.png";
+import e2Walk5 from "./assets/yellowninjawalk5.png";
+import e2Hurt0 from "./assets/yellowninjahurt0.png";
+import e2Hurt1 from "./assets/yellowninjahurt1.png";
+import e2Hurt2 from "./assets/yellowninjahurt2.png";
+import e2Hurt3 from "./assets/yellowninjahurt3.png";
+
 const enemy1IdleFrames = [e1Idle0, e1Idle1, e1Idle2, e1Idle3, e1Idle4, e1Idle5];
 const enemy1HurtFrames = [e1Hurt0, e1Hurt1, e1Hurt2, e1Hurt3];
+
+const enemy2WalkFrames = [e2Walk0, e2Walk1, e2Walk2, e2Walk3, e2Walk4, e2Walk5];
+const enemy2HurtFrames = [e2Hurt0, e2Hurt1, e2Hurt2, e2Hurt3];
 
 function App() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -28,7 +42,6 @@ function App() {
   const [stamina, setStamina] = useState(100);
   const [score, setScore] = useState(0);
   const [shurikens, setShurikens] = useState([]);
-  const [enemyShurikens, setEnemyShurikens] = useState([]);
   const [facing, setFacing] = useState(1);
   const [posY, setPosY] = useState(0);
   const [isJumping, setIsJumping] = useState(false);
@@ -53,8 +66,8 @@ function App() {
     [levelAudioRef, bossAudioRef, defeatSoundRef, levelVictoryRef, throwSoundRef].forEach((ref) => {
       if (ref.current) ref.current.volume = 0.5;
     });
-    levelAudioRef.current.loop = true;
-    bossAudioRef.current.loop = true;
+    if (levelAudioRef.current) levelAudioRef.current.loop = true;
+    if (bossAudioRef.current) bossAudioRef.current.loop = true;
   }, []);
 
   const keysPressed = useRef({});
@@ -63,26 +76,29 @@ function App() {
   const facingRef = useRef(facing);
 
   const GRAVITY = 1.8;
-  const JUMP_FORCE = 28; // Aumentado para compensar o Bashira mais pequeno
+  const JUMP_FORCE = 28;
 
   useEffect(() => {
     const levelMusic = levelAudioRef.current;
     const bossMusic = bossAudioRef.current;
     if (gameStarted && hp > 0 && !gameVictory && !showLevelUp) {
-      if (level === 3) { levelMusic.pause(); bossMusic.play().catch(() => {}); }
-      else { bossMusic.pause(); levelMusic.play().catch(() => {}); }
-    } else { levelMusic.pause(); bossMusic.pause(); }
+      if (level === 3 && bossMusic) { levelMusic?.pause(); bossMusic.play().catch(() => {}); }
+      else if (levelMusic) { bossMusic?.pause(); levelMusic.play().catch(() => {}); }
+    } else {
+      levelMusic?.pause();
+      bossMusic?.pause();
+    }
   }, [gameStarted, level, hp, gameVictory, showLevelUp]);
 
   useEffect(() => {
-    if (showLevelUp || gameVictory) {
+    if ((showLevelUp || gameVictory) && levelVictoryRef.current) {
       levelVictoryRef.current.currentTime = 0;
       levelVictoryRef.current.play().catch(() => {});
     }
   }, [showLevelUp, gameVictory]);
 
   useEffect(() => {
-    if (hp <= 0 && gameStarted) {
+    if (hp <= 0 && gameStarted && defeatSoundRef.current) {
       defeatSoundRef.current.currentTime = 0;
       defeatSoundRef.current.play().catch(() => {});
     }
@@ -101,15 +117,17 @@ function App() {
       for (let i = 0; i < countPerSide; i++) {
         const spawnDistance = 450;
         allEnemies.push({
-          id: `minion-${lvl}-${sideDir}-${i}`,
+          id: `enemy-${lvl}-${sideDir}-${i}`,
           x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
-          hp: 100,
+          hp: lvl === 1 ? 100 : 150,
+          maxHp: lvl === 1 ? 100 : 150,
           dir: sideDir,
-          speed: 2 + Math.random() * 1.5 + lvl * 0.3,
+          speed: lvl === 1 ? 3 : 2.2,
           currentFrame: 0,
           lastFrameUpdate: Date.now(),
           isHurt: false,
-          lastHurt: 0
+          lastHurt: 0,
+          type: lvl 
         });
       }
     });
@@ -185,8 +203,10 @@ function App() {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) { setIsJumping(true); setVelY(JUMP_FORCE); }
     if (e.key.toLowerCase() === "f" && stamina >= 25) {
-      throwSoundRef.current.currentTime = 0;
-      throwSoundRef.current.play().catch(() => {});
+      if (throwSoundRef.current) {
+        throwSoundRef.current.currentTime = 0;
+        throwSoundRef.current.play().catch(() => {});
+      }
       const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
       setShurikens((prev) => [...prev, { id: Date.now(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
       setStamina((s) => Math.max(s - 25, 0));
@@ -218,15 +238,10 @@ function App() {
           if (enemy.hp <= 0) return enemy;
           const tempoAgora = Date.now();
 
-          // LÓGICA DE ANIMAÇÃO SEM LOOP NO HURT
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             if (enemy.isHurt) {
-               // Se estiver a sofrer dano, só aumenta o frame se ainda não for o último (frame 3)
-               if (enemy.currentFrame < 3) {
-                  enemy.currentFrame += 1;
-               }
+               if (enemy.currentFrame < 3) { enemy.currentFrame += 1; }
             } else {
-               // Idle normal em loop
                enemy.currentFrame = (enemy.currentFrame + 1) % 6;
             }
             enemy.lastFrameUpdate = tempoAgora;
@@ -258,7 +273,7 @@ function App() {
             nHp -= 34;
             isHurt = true;
             lastHurt = tempoAgora;
-            currentFrame = 0; // Reinicia para o início da animação de dano
+            currentFrame = 0;
             if (nHp <= 0) setScore((s) => s + 100);
           }
           return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt, lastHurt, currentFrame };
@@ -300,32 +315,38 @@ function App() {
             </div>
           </div>
 
-          {/* BASHIRA (Personagem um pouco mais pequeno) */}
           <div
             className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
             style={{ 
                 left: `${pos}px`, 
                 bottom: `${50 + posY}px`, 
-                transform: `scaleX(${facing}) scale(0.85)` // scale(0.85) torna-o um pouco mais pequeno
+                transform: `scaleX(${facing}) scale(0.85)`
             }}
           ></div>
 
-          {/* INIMIGOS (Maiores e mais baixos) */}
           {enemies.map((enemy) =>
             enemy.hp > 0 && (
               <div key={enemy.id} style={{ 
                 left: `${enemy.x}px`, 
-                bottom: "70px", // 10 píxeis mais para baixo
+                bottom: "70px", 
                 position: "absolute", 
                 transform: `scaleX(${enemy.dir})`, 
                 zIndex: 100 
               }}>
                 <div style={{ background: "#333", width: "80px", height: "8px", marginBottom: "5px" }}>
-                  <div style={{ background: "red", height: "100%", width: `${enemy.hp}%` }}></div>
+                  <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
                 </div>
                 <img 
-                  src={enemy.isHurt ? enemy1HurtFrames[enemy.currentFrame] : enemy1IdleFrames[enemy.currentFrame]}
-                  style={{ width: "100px", height: "auto", imageRendering: "pixelated" }} 
+                  src={enemy.type === 1 
+                    ? (enemy.isHurt ? enemy1HurtFrames[enemy.currentFrame] : enemy1IdleFrames[enemy.currentFrame])
+                    : (enemy.isHurt ? enemy2HurtFrames[enemy.currentFrame] : enemy2WalkFrames[enemy.currentFrame])
+                  }
+                  style={{ 
+                    width: enemy.type === 1 ? "100px" : "125px", 
+                    height: "auto", 
+                    imageRendering: "pixelated" 
+                  }} 
+                  alt="inimigo"
                 />
               </div>
             )
