@@ -111,17 +111,14 @@ function App() {
   }, [pos, posY, facing]);
 
   const generateEnemies = (lvl) => {
-    // Nível 1: 15 inimigos (aprox 7/8 por lado). Nível 2: 20 inimigos (10 por lado).
     const countPerSide = lvl === 1 ? 8 : 10; 
     let allEnemies = [];
     [1, -1].forEach((sideDir) => {
       for (let i = 0; i < countPerSide; i++) {
-        // No nível 1, tipo é sempre 1. No nível 2, 50% de chance de ser tipo 1 ou 2.
         const type = lvl === 1 ? 1 : (Math.random() > 0.5 ? 2 : 1);
         const spawnDistance = 450;
-        
         allEnemies.push({
-          id: `enemy-${lvl}-${sideDir}-${i}`,
+          id: `enemy-${lvl}-${sideDir}-${i}-${Math.random()}`, // ID mais único
           x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
           hp: type === 1 ? 100 : 150,
           maxHp: type === 1 ? 100 : 150,
@@ -135,7 +132,6 @@ function App() {
         });
       }
     });
-    // Limitar o total exato para 15 no nível 1 se necessário
     return lvl === 1 ? allEnemies.slice(0, 15) : allEnemies;
   };
 
@@ -213,7 +209,13 @@ function App() {
         throwSoundRef.current.play().catch(() => {});
       }
       const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
-      setShurikens((prev) => [...prev, { id: Date.now(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
+      setShurikens((prev) => [...prev, { 
+        id: Date.now() + Math.random(), 
+        x: startX, 
+        y: posYRef.current + 14, 
+        dir: facingRef.current,
+        active: true // Nova flag para evitar dano múltiplo
+      }]);
       setStamina((s) => Math.max(s - 25, 0));
     }
   }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory]);
@@ -236,13 +238,15 @@ function App() {
         return newPos;
       });
 
-      let hitShurikenIds = [];
-
-      setEnemies((prev) =>
-        prev.map((enemy) => {
+      setEnemies((prevEnemies) => {
+        let updatedShurikens = [];
+        
+        // Primeiro, atualizamos os inimigos e detectamos colisões
+        const newEnemies = prevEnemies.map((enemy) => {
           if (enemy.hp <= 0) return enemy;
           const tempoAgora = Date.now();
 
+          // Animação do Inimigo
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             if (enemy.isHurt) {
                if (enemy.currentFrame < 3) { enemy.currentFrame += 1; }
@@ -265,34 +269,51 @@ function App() {
             if (nX < 0) nDir = 1;
           }
 
+          // Dano no Jogador
           if (Math.abs(nX - posRef.current) < 65 && posYRef.current < 70) setHp((h) => Math.max(h - 0.8, 0));
 
-          const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + 80);
+          // Lógica de Colisão de Shuriken (REVISADA)
           let nHp = enemy.hp;
           let isHurt = enemy.isHurt;
           let lastHurt = enemy.lastHurt;
           let currentFrame = enemy.currentFrame;
 
-          if (coll) {
-            hitShurikenIds.push(coll.id);
-            nHp -= 34;
-            isHurt = true;
-            lastHurt = tempoAgora;
-            currentFrame = 0;
-            if (nHp <= 0) setScore((s) => s + 100);
-          }
-          return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt, lastHurt, currentFrame };
-        })
-      );
+          setShurikens((prevS) => {
+            let collisionOccurred = false;
+            const nextS = prevS.map(s => {
+              if (s.active && s.x > nX - 20 && s.x < nX + 80) {
+                collisionOccurred = true;
+                return { ...s, active: false }; // Desativa a shuriken na hora
+              }
+              return s;
+            });
+            
+            if (collisionOccurred) {
+              nHp -= 34;
+              isHurt = true;
+              lastHurt = tempoAgora;
+              currentFrame = 0;
+              if (nHp <= 0) setScore((s) => s + 100);
+            }
+            return nextS;
+          });
 
+          return { ...enemy, x: nX, dir: nDir, hp: nHp, isHurt, lastHurt, currentFrame };
+        });
+
+        return newEnemies;
+      });
+
+      // Movimentação e limpeza de shurikens
       setShurikens((prev) =>
-        prev.filter((s) => !hitShurikenIds.includes(s.id))
+        prev.filter((s) => s.active) // Remove as que colidiram
           .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
           .filter((s) => s.x > -100 && s.x < window.innerWidth + 100)
       );
+
     }, 1000 / 60);
     return () => clearInterval(engine);
-  }, [gameStarted, showLevelUp, gameVictory, level, shurikens]);
+  }, [gameStarted, showLevelUp, gameVictory]);
 
   return (
     <div className="game-container">
@@ -357,7 +378,7 @@ function App() {
             )
           )}
 
-          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
+          {shurikens.map((s) => s.active && <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
 
           {showLevelUp && (
             <div className="overlay level-up">
