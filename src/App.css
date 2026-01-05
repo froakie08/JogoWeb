@@ -1,136 +1,221 @@
-/* Configuração Geral do Jogo */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.game-container {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to bottom, #3d1414, #1a0a0a);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+  color: white;
+}
+
+.game-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 80px;
+  background: #111;
+  border-top: 4px solid #8b0000;
+  z-index: 10;
+}
+
+.start-menu {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, #4d1a1a 0%, #000 100%);
+  z-index: 500;
+}
+
+.title-glow {
+  font-size: clamp(50px, 10vw, 120px);
+  color: #ffd700;
+  text-shadow: 0 0 20px #ff0000, 5px 5px 0px #333;
+  letter-spacing: 15px;
+  animation: pulse 2s infinite alternate;
+}
+
+.btn-start {
+  padding: 20px 60px;
+  background: #8b0000;
+  color: white;
+  font-size: 28px;
+  font-family: inherit;
+  font-weight: bold;
+  border: 4px solid #ffd700;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
+  text-transform: uppercase;
+  transition: 0.3s;
+}
+
+.btn-start:hover {
+  background: #ff0000;
+  transform: scale(1.1);
+}
+
+.btn-retry {
+  padding: 15px 40px;
+  background: #1a1a1a;
+  color: #ff4444;
+  font-size: 22px;
+  border: 2px solid #ff4444;
+  cursor: pointer;
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 40px;
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom: 2px solid #8b0000;
+  z-index: 100;
+  position: relative;
+}
+
+.stats-container {
+  position: absolute;
+  top: 75px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  display: flex;
+  gap: 30px;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 25px;
+  border: 1px solid #8b0000;
+  border-top: none;
+}
+
+.life-bar-outer, .stamina-bar-outer {
+  width: 250px; 
+  height: 15px;
+  background: #222;
+  border: 1px solid #fff;
+}
+
+.life-bar-fill { height: 100%; background: #ff0000; transition: width 0.3s; }
+.stamina-bar-fill { height: 100%; background: #00ff00; transition: width 0.3s; }
+
+.bashira {
+  width: 100px;
+  height: 140px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+  bottom: 50px;
+  z-index: 50;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+  transition: transform 0.1s;
+}
+
+.bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
+.bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
+.bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
+.bashira.run-frame-2 { background-image: url('./assets/Correr-2.png'); }
+.bashira.run-frame-3 { background-image: url('./assets/Correr-3.png'); }
+.bashira.run-frame-4 { background-image: url('./assets/Correr-4.png'); }
+.bashira.jump-frame-1 { background-image: url('./assets/FinalizadoSalto-1.png'); }
+.bashira.jump-frame-2 { background-image: url('./assets/FinalizadoSalto-2.png'); }
+.bashira.jump-frame-3 { background-image: url('./assets/FinalizadoSalto-3.png'); }
+.bashira.jump-frame-4 { background-image: url('./assets/FinalizadoSalto-4.png'); }
+.bashira.jump-frame-5 { background-image: url('./assets/FinalizadoSalto-5.png'); }
+.bashira.jump-frame-6 { background-image: url('./assets/FinalizadoSalto-6.png'); }
+.bashira.jump-frame-7 { background-image: url('./assets/FinalizadoSalto-7.png'); }
+.bashira.jump-frame-8 { background-image: url('./assets/FinalizadoSalto-8.png'); }
+.bashira.jump-frame-9 { background-image: url('./assets/FinalizadoSalto-9.png'); }
+.bashira.jump-frame-10 { background-image: url('./assets/FinalizadoSalto-10.png'); }
+.bashira.jump-frame-11 { background-image: url('./assets/FinalizadoSalto-11.png'); }
+.bashira.jump-frame-12 { background-image: url('./assets/FinalizadoSalto-12.png'); }
+
+.shuriken {
+  width: 25px;
+  height: 25px;
+  background: #565151;
+  position: absolute;
+  clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+  animation: spin 0.1s linear infinite;
+  z-index: 90;
+}
+
+.overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  align-items: center;
+  z-index: 1000;
+}
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+.powerup-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.btn-powerup {
+  padding: 10px 25px;
+  background: #8b0000;
+  color: white;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  border: 3px solid #ffd700;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: 0.2s;
+}
+
+.btn-powerup:hover {
+  background: #ff0000;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.overlay p {
+  font-size: 20px;
+  color: #ffd700;
+  margin-bottom: 10px;
+}
+
 .game-container {
   width: 100vw;
   height: 100vh;
   position: relative;
   overflow: hidden;
   
-  /* Fundo da Masmorra */
-  background-image: url('/background.png'); /* Certifica-te que está na pasta public */
+  /* Masmorra */
+  background-image: url('/background.png');
   background-repeat: repeat-x;
-  /* 145% ajusta a altura da masmorra para os bonecos não parecerem anões */
+  /* 145% ajusta a tocha à cabeça do Inimigo 2 sem fazer a masmorra parecer gigante */
   background-size: auto 145%; 
   background-position: center bottom;
   background-color: #0a0a0a;
 }
 
-/* HUD - Interface Superior */
+/* Removemos bordas e garantimos que o HUD não atrapalhe a visão do topo */
 .hud {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 30px;
-  color: white;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: bold;
-  font-size: 1.2rem;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.4); /* Fundo subtil para não tapar os arcos */
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 0 0 10px 10px;
 }
 
-.hud-center {
-  flex-grow: 1;
-  text-align: center;
-}
-
-/* Barras de Status */
-.stats-container {
-  position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 20px;
-  z-index: 1000;
-}
-
-.bar-label {
-  color: white;
-  font-size: 0.7rem;
-  margin-bottom: 2px;
-  text-align: center;
-}
-
-/* Largura dinâmica controlada pelo JSX via style */
-.life-bar-outer, .stamina-bar-outer {
-  height: 14px;
-  background: #333;
-  border: 2px solid #000;
-}
-
-.life-bar-fill {
-  height: 100%;
-  background: red;
-  transition: width 0.2s;
-}
-
-.stamina-bar-fill {
-  height: 100%;
-  background: #00ff00;
-  transition: width 0.2s;
-}
-
-/* Personagens e Elementos */
-.bashira {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  z-index: 200;
-}
-
-.shuriken {
-  position: absolute;
-  width: 25px;
-  height: 25px;
-  background: url('./assets/shuriken.png') no-repeat center/contain;
-  image-rendering: pixelated;
-  z-index: 150;
-  animation: spin 0.2s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Overlays (Menus) */
-.overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  z-index: 2000;
-}
-
-.powerup-container {
-  display: flex;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.btn-powerup, .btn-start, .btn-retry {
-  padding: 15px 25px;
-  font-size: 1rem;
-  cursor: pointer;
-  background: #444;
-  color: white;
-  border: 2px solid #666;
-  transition: 0.3s;
-}
-
-.btn-powerup:hover { background: #666; border-color: #fff; }
-
-.title-glow {
-  font-size: 4rem;
-  text-shadow: 0 0 20px red;
-  margin-bottom: 30px;
+.bashira, .shuriken {
+  border: none !important;
 }
