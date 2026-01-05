@@ -193,29 +193,3 @@ body, html {
   color: #ffd700;
   margin-bottom: 10px;
 }
-
-.game-container {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-  
-  /* Masmorra */
-  background-image: url('/background.png');
-  background-repeat: repeat-x;
-  /* 145% ajusta a tocha à cabeça do Inimigo 2 sem fazer a masmorra parecer gigante */
-  background-size: auto 145%; 
-  background-position: center bottom;
-  background-color: #0a0a0a;
-}
-
-/* Removemos bordas e garantimos que o HUD não atrapalhe a visão do topo */
-.hud {
-  background: rgba(0, 0, 0, 0.6);
-  padding: 10px;
-  border-radius: 0 0 10px 10px;
-}
-
-.bashira, .shuriken {
-  border: none !important;
-}
