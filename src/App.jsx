@@ -331,7 +331,7 @@ function App() {
                 transform: `scaleX(${enemy.dir})`, 
                 zIndex: 100 
               }}>
-                <div style={{ background: "#333", width: "40px", height: "5px", marginBottom: "5px" }}>
+                <div style={{ background: "#333", width: "80px", height: "10px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${enemy.hp}%` }}></div>
                 </div>
                 <img 
