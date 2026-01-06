@@ -343,8 +343,6 @@ function App() {
     return () => clearInterval(runAnim);
   }, [isJumping, gameStarted, showLevelUp]);
 
-  const theBoss = enemies.find(e => e.type === 3);
-
   // Função auxiliar para cores
   const getStatColor = (lvl) => {
     if (lvl >= 5) return "#00ff00"; 
