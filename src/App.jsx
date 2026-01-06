@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 
-// --- IMPORTAÇÕES DE SPRITES (TODOS OS FRAMES) ---
+// --- SPRITES (Mantidos todos os frames para não quebrar animações) ---
 import e1Idle0 from "./assets/sprite_idle0.png"; import e1Idle1 from "./assets/sprite_idle1.png"; import e1Idle2 from "./assets/sprite_idle2.png"; import e1Idle3 from "./assets/sprite_idle3.png"; import e1Idle4 from "./assets/sprite_idle4.png"; import e1Idle5 from "./assets/sprite_idle5.png"; 
 import e1Hurt0 from "./assets/sprite_hurt0.png"; import e1Hurt1 from "./assets/sprite_hurt1.png"; import e1Hurt2 from "./assets/sprite_hurt2.png"; import e1Hurt3 from "./assets/sprite_hurt3.png";
 import e2Walk0 from "./assets/yellowninjawalk0.png"; import e2Walk1 from "./assets/yellowninjawalk1.png"; import e2Walk2 from "./assets/yellowninjawalk2.png"; import e2Walk3 from "./assets/yellowninjawalk3.png"; import e2Walk4 from "./assets/yellowninjawalk4.png"; import e2Walk5 from "./assets/yellowninjawalk5.png"; 
@@ -21,14 +21,13 @@ const bossHurtFrames = [bossHurt0, bossHurt1, bossHurt2];
 const bossDeathFrames = [bossDeath0, bossDeath1, bossDeath2, bossDeath3, bossDeath4, bossDeath5, bossDeath6, bossDeath7, bossDeath8, bossDeath9, bossDeath10, bossDeath11, bossDeath12];
 
 function App() {
-  // --- ESTADOS DE SISTEMA ---
   const [gameStarted, setGameStarted] = useState(false);
   const [level, setLevel] = useState(1);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [gameVictory, setGameVictory] = useState(false);
   const [score, setScore] = useState(0);
 
-  // --- STATS E NÍVEIS (Mecânica 1-5) ---
+  // --- STATS E NÍVEIS (Regras de 40 DMG e HP 125/350/5000) ---
   const BASE_DMG = 40;
   const BASE_HP = 100;
   const BASE_STAMINA = 100;
@@ -41,11 +40,9 @@ function App() {
   const [maxStamina, setMaxStamina] = useState(BASE_STAMINA);
   const [currentDmg, setCurrentDmg] = useState(BASE_DMG);
   const [currentRegen, setCurrentRegen] = useState(BASE_REGEN);
-
   const [hasInfRegen, setHasInfRegen] = useState(false);
   const [hasBossHeal, setHasBossHeal] = useState(false);
 
-  // --- ENTIDADES E FÍSICA ---
   const [enemies, setEnemies] = useState([]);
   const [shurikens, setShurikens] = useState([]);
   const [pos, setPos] = useState(window.innerWidth / 2 - 50);
@@ -56,12 +53,10 @@ function App() {
   const [isRegenBlocked, setIsRegenBlocked] = useState(false);
   const [powerUpOptions, setPowerUpOptions] = useState([]);
 
-  // --- ANIMAÇÕES BASHIRA ---
   const [idleFrame, setIdleFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
   const [jumpFrame, setJumpFrame] = useState(1);
 
-  // --- REFS ---
   const levelAudioRef = useRef(null);
   const bossAudioRef = useRef(null);
   const throwSoundRef = useRef(null);
@@ -84,7 +79,6 @@ function App() {
     posRef.current = pos; posYRef.current = posY; facingRef.current = facing;
   }, [pos, posY, facing]);
 
-  // --- GERAÇÃO DE INIMIGOS ---
   const generateEnemies = (lvl) => {
     if (lvl === 3) {
       return Array.from({ length: 5 }, (_, i) => ({
@@ -99,8 +93,7 @@ function App() {
       const ehp = type === 1 ? 125 : 350;
       const side = Math.random() > 0.5 ? 1 : -1;
       return {
-        id: `e-${lvl}-${i}-${Math.random()}`,
-        x: side === 1 ? -300 - i * 450 : window.innerWidth + 300 + i * 450,
+        id: `e-${lvl}-${i}`, x: side === 1 ? -300 - i * 450 : window.innerWidth + 300 + i * 450,
         hp: ehp, maxHp: ehp, dir: side, speed: type === 1 ? 3 : 2.2, type: type,
         currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0
       };
@@ -109,7 +102,6 @@ function App() {
 
   useEffect(() => { if (gameStarted) setEnemies(generateEnemies(1)); }, [gameStarted]);
 
-  // --- LÓGICA DE LEVEL UP ---
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const aliveCount = enemies.filter(e => e.hp > 0 || (e.type === 3 && e.isDying)).length;
@@ -124,13 +116,12 @@ function App() {
         if (!hasInfRegen) pool.push({ id: "inf_regen", name: "Infinite Stamina Regen" });
         if (!hasBossHeal) pool.push({ id: "boss_heal", name: "100% HP When Boss Spawns" });
 
-        const randomThree = pool.sort(() => 0.5 - Math.random()).slice(0, 3);
-        setPowerUpOptions(randomThree);
+        setPowerUpOptions(pool.sort(() => 0.5 - Math.random()).slice(0, 3));
         setShowLevelUp(true);
       } else if (level === 3 && !enemies.some(e => e.type === 3)) {
         if (hasBossHeal) setHp(maxHp);
         setEnemies([{
-          id: "THE_BOSS", x: -500, hp: 5000, maxHp: 5000, dir: 1, speed: 2.4, type: 3,
+          id: "BOSS", x: -500, hp: 5000, maxHp: 5000, dir: 1, speed: 2.4, type: 3,
           currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0, isAttacking: false, isDying: false
         }]);
         if (levelAudioRef.current) levelAudioRef.current.pause();
@@ -156,19 +147,15 @@ function App() {
     setPosY(0);
   };
 
-  // --- MOTOR DE JOGO ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const interval = setInterval(() => {
-      // Movimento Jogador
       setPos(p => {
         let n = p;
         if (keysPressed.current["ArrowRight"]) { n = Math.min(p + 8, window.innerWidth - 110); setFacing(1); }
         if (keysPressed.current["ArrowLeft"]) { n = Math.max(p - 8, 0); setFacing(-1); }
         return n;
       });
-
-      // Salto
       setPosY(y => {
         if (y > 0 || velY !== 0) {
           let nY = y + velY; setVelY(v => v - 1.8);
@@ -178,43 +165,30 @@ function App() {
         return 0;
       });
 
-      // Lógica Inimigos
-      let shurikensToRemove = [];
+      let hitIds = [];
       setEnemies(prev => prev.map(enemy => {
         if (enemy.isDying) {
-          const t = Date.now();
-          if (t - enemy.lastFrameUpdate > 150) return { ...enemy, currentFrame: Math.min(enemy.currentFrame + 1, 12), lastFrameUpdate: t };
+          if (Date.now() - enemy.lastFrameUpdate > 150) return { ...enemy, currentFrame: Math.min(enemy.currentFrame + 1, 12), lastFrameUpdate: Date.now() };
           return enemy;
         }
         if (enemy.hp <= 0 && enemy.type !== 3) return enemy;
-
         const now = Date.now();
-        // Animação Frame Inimigo
         if (now - enemy.lastFrameUpdate > 100) {
-          if (enemy.type === 3) {
-            enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 2) : enemy.isAttacking ? (enemy.currentFrame + 1) % 6 : (enemy.currentFrame + 1) % 8;
-          } else {
-            enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
-          }
+          if (enemy.type === 3) enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 2) : enemy.isAttacking ? (enemy.currentFrame + 1) % 6 : (enemy.currentFrame + 1) % 8;
+          else enemy.currentFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
           enemy.lastFrameUpdate = now;
         }
-        if (enemy.isHurt && now - enemy.lastHurt > 500) { enemy.isHurt = false; enemy.currentFrame = 0; }
-
+        if (enemy.isHurt && now - enemy.lastHurt > 500) enemy.isHurt = false;
         let nX = enemy.x + (enemy.isHurt ? 0 : enemy.dir * enemy.speed);
         let nDir = enemy.dir;
         if (nX > window.innerWidth - 100) nDir = -1; if (nX < -100) nDir = 1;
-
-        // Dano no Jogador
-        const dist = Math.abs(nX - posRef.current);
-        if (dist < (enemy.type === 3 ? 140 : 75) && posYRef.current < 100) {
+        if (Math.abs(nX - posRef.current) < (enemy.type === 3 ? 140 : 75) && posYRef.current < 100) {
           setHp(h => Math.max(h - (enemy.type === 3 ? 1.5 : 0.8), 0));
           if (enemy.type === 3) enemy.isAttacking = true;
         } else if (enemy.type === 3) enemy.isAttacking = false;
-
-        // Colisão Shuriken
         const hit = shurikens.find(s => s.x > nX - 20 && s.x < nX + (enemy.type === 3 ? 220 : 85));
-        if (hit && !shurikensToRemove.includes(hit.id)) {
-          shurikensToRemove.push(hit.id);
+        if (hit && !hitIds.includes(hit.id)) {
+          hitIds.push(hit.id);
           const newHp = enemy.hp - currentDmg;
           if (newHp <= 0 && enemy.type === 3) {
             if (bossAudioRef.current) bossAudioRef.current.pause();
@@ -227,48 +201,32 @@ function App() {
         }
         return { ...enemy, x: nX, dir: nDir };
       }));
-
-      setShurikens(prev => prev.filter(s => !shurikensToRemove.includes(s.id)).map(s => ({...s, x: s.x + 25 * s.dir})).filter(s => s.x > -150 && s.x < window.innerWidth + 150));
+      setShurikens(prev => prev.filter(s => !hitIds.includes(s.id)).map(s => ({...s, x: s.x + 25 * s.dir})).filter(s => s.x > -150 && s.x < window.innerWidth + 150));
     }, 1000/60);
     return () => clearInterval(interval);
   }, [gameStarted, showLevelUp, gameVictory, shurikens, currentDmg, velY, hp]);
 
-  // --- REGENERAÇÃO ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-    const regenInt = setInterval(() => {
-      if (hasInfRegen || !isRegenBlocked) {
-        setStamina(s => Math.min(s + currentRegen, maxStamina));
-      }
-    }, 250);
+    const regenInt = setInterval(() => { if (hasInfRegen || !isRegenBlocked) setStamina(s => Math.min(s + currentRegen, maxStamina)); }, 250);
     return () => clearInterval(regenInt);
   }, [gameStarted, hp, showLevelUp, gameVictory, maxStamina, currentRegen, isRegenBlocked, hasInfRegen]);
 
-  // --- ANIMAÇÕES BASHIRA ---
   useEffect(() => {
     const idleInt = setInterval(() => setIdleFrame(f => (f === 1 ? 2 : 1)), 500);
     return () => clearInterval(idleInt);
   }, []);
   useEffect(() => {
     let runInt;
-    if (!isJumping && gameStarted) {
-      runInt = setInterval(() => {
-        if (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"]) setRunFrame(f => (f < 4 ? f + 1 : 1));
-        else setRunFrame(1);
-      }, 100);
-    }
+    if (!isJumping && gameStarted) runInt = setInterval(() => { if (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"]) setRunFrame(f => (f < 4 ? f + 1 : 1)); else setRunFrame(1); }, 100);
     return () => clearInterval(runInt);
   }, [isJumping, gameStarted]);
   useEffect(() => {
     let jumpInt;
-    if (isJumping) {
-      setJumpFrame(1);
-      jumpInt = setInterval(() => setJumpFrame(f => Math.min(f + 1, 12)), 60);
-    }
+    if (isJumping) { setJumpFrame(1); jumpInt = setInterval(() => setJumpFrame(f => Math.min(f + 1, 12)), 60); }
     return () => clearInterval(jumpInt);
   }, [isJumping]);
 
-  // --- CONTROLES ---
   const handleKeyDown = useCallback((e) => {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
@@ -300,20 +258,22 @@ function App() {
         </div>
       ) : (
         <>
+          {/* HUD ORIGINAL RESTAURADO */}
           <div className="hud">
-            <div className="hud-column">
-              <div className="level-indicator">NÍVEL: {level}</div>
-              <div className="stats-list">
+            <div className="hud-left">
+              <div>NÍVEL: {level}</div>
+              {/* LISTA DE NÍVEIS ABAIXO DO NÍVEL ATUAL */}
+              <div className="shopping-list">
                 <p>HP - lvl {lvls.hp}</p>
                 <p>DMG - lvl {lvls.dmg}</p>
                 <p>Stamina - lvl {lvls.stamina}</p>
                 <p>Stamina Regen - lvl {lvls.regen}</p>
-                {hasInfRegen && <p className="special-stat">Infinite Stamina Regen</p>}
-                {hasBossHeal && <p className="special-stat">Heal on Boss Spawn</p>}
+                {hasInfRegen && <p style={{color: 'gold'}}>Infinite Regen</p>}
+                {hasBossHeal && <p style={{color: 'gold'}}>Heal on Boss</p>}
               </div>
             </div>
             <div className="hud-center">PONTOS: {score}</div>
-            <div className="enemies-left">INIMIGOS: {enemies.filter(e => e.hp > 0 || e.isDying).length}</div>
+            <div className="hud-right">INIMIGOS: {enemies.filter(e => e.hp > 0 || e.isDying).length}</div>
           </div>
 
           <div className="stats-container">
@@ -338,14 +298,14 @@ function App() {
                style={{ left: `${pos}px`, bottom: "80px", transform: `scaleX(${facing}) translateY(${-posY}px)` }}></div>
 
           {enemies.map(e => (e.hp > 0 || e.isDying) && (
-            <div key={e.id} style={{ left: `${e.x}px`, bottom: "80px", position: "absolute", transform: `scaleX(${e.dir})`, zIndex: 10 }}>
+            <div key={e.id} style={{ left: `${e.x}px`, bottom: "80px", position: "absolute", transform: `scaleX(${e.dir})` }}>
               {e.type !== 3 && (
                 <div className="enemy-hp-bar"><div className="enemy-hp-fill" style={{ width: `${(e.hp/e.maxHp)*100}%` }}></div></div>
               )}
               <img src={e.type === 3 ? (e.isDying ? bossDeathFrames[e.currentFrame] : e.isHurt ? bossHurtFrames[e.currentFrame] : e.isAttacking ? bossAtkFrames[e.currentFrame] : bossMoveFrames[e.currentFrame]) 
                         : e.type === 1 ? (e.isHurt ? enemy1HurtFrames[e.currentFrame] : enemy1IdleFrames[e.currentFrame]) 
                         : (e.isHurt ? enemy2HurtFrames[e.currentFrame] : enemy2WalkFrames[e.currentFrame])} 
-                   className={e.type === 3 ? "boss-sprite" : e.type === 2 ? "ninja-yellow" : "ninja-red"} />
+                   style={{ width: e.type === 3 ? "350px" : e.type === 2 ? "120px" : "100px", imageRendering: 'pixelated' }} />
             </div>
           ))}
 
@@ -361,9 +321,8 @@ function App() {
               </div>
             </div>
           )}
-
-          {gameVictory && <div className="overlay"><h1 className="title-glow">VITÓRIA TOTAL!</h1></div>}
-          {hp <= 0 && <div className="overlay"><h1>DERROTA</h1><button className="btn-retry" onClick={() => window.location.reload()}>RECOMEÇAR</button></div>}
+          {gameVictory && <div className="overlay"><h1>VITÓRIA TOTAL!</h1></div>}
+          {hp <= 0 && <div className="overlay"><h1>DERROTA</h1><button onClick={() => window.location.reload()}>RECOMEÇAR</button></div>}
         </>
       )}
     </div>
