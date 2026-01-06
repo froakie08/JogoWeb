@@ -193,3 +193,37 @@ body, html {
   color: #ffd700;
   margin-bottom: 10px;
 }
+
+/* Nova lista de stats dentro do jogo */
+.stats-list-container {
+  position: absolute;
+  top: 90px; /* Ajusta para ficar abaixo da linha do HUD */
+  left: 20px;
+  display: grid;
+  grid-template-columns: 100px auto; /* Coluna 1 fixa o tamanho para alinhar a 2 */
+  column-gap: 8px;
+  font-family: 'Courier New', Courier, monospace; /* Dá um ar de RPG/Terminal */
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7); /* Branco suave para não distrair */
+  text-shadow: 2px 2px 2px black;
+  z-index: 50;
+  pointer-events: none; /* Garante que não clicas nisto sem querer */
+}
+
+.stat-name {
+  text-align: right;
+  font-weight: bold;
+}
+
+.stat-value {
+  text-align: left;
+  color: #fff;
+}
+
+.stat-special {
+  grid-column: span 2;
+  color: #00ff00;
+  font-weight: bold;
+  margin-top: 5px;
+  text-align: left;
+}

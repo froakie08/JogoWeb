@@ -358,21 +358,22 @@ function App() {
       ) : (
         <>
           <div className="hud">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div>NÍVEL: {level}</div>
-              {/* NOVA LISTA DE STATS ABAIXO DO NÍVEL */}
-              <div className="stats-list" style={{ fontSize: '14px', marginTop: '5px', textAlign: 'left', color: '#aaa', textShadow: '1px 1px 2px black' }}>
-                <div>Dmg - lvl {upgrades.dmg + 1}</div>
-                <div>HP - lvl {upgrades.hp + 1}</div>
-                <div>Stamina - lvl {upgrades.stamina + 1}</div>
-                <div>Stamina Regen - lvl {upgrades.regen + 1}</div>
-                {staminaRegenJump && <div style={{ color: '#00ff00' }}>Infinite Stamina Regen</div>}
-                {healInBossActive && <div style={{ color: '#00ff00' }}>Heal in Boss</div>}
-              </div>
-            </div>
+            <div>NÍVEL: {level}</div>
             <div className="hud-center">PONTOS: {score}</div>
             <div>INIMIGOS: {enemies.filter((e) => e.hp > 0 || (e.type === 3 && e.isDying)).length}</div>
           </div>
+
+          {/* LISTA DE STATS NO CANTO SUPERIOR ESQUERDO, DENTRO DA ÁREA DE JOGO */}
+          <div className="stats-list-container">
+            <span className="stat-name">Dmg -</span><span className="stat-value">lvl {upgrades.dmg + 1}</span>
+            <span className="stat-name">HP -</span><span className="stat-value">lvl {upgrades.hp + 1}</span>
+            <span className="stat-name">Stamina -</span><span className="stat-value">lvl {upgrades.stamina + 1}</span>
+            <span className="stat-name">Stamina Regen -</span><span className="stat-value">lvl {upgrades.regen + 1}</span>
+            
+            {staminaRegenJump && <div className="stat-special">Infinite Stamina Regen</div>}
+            {healInBossActive && <div className="stat-special">Heal in Boss</div>}
+          </div>
+          
           <div className="stats-container">
             <div className="stat-group">
               <div className="bar-label">VIDA</div>
