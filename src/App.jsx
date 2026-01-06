@@ -75,6 +75,7 @@ function App() {
   const [staminaRegenValue, setStaminaRegenValue] = useState(4);
   const [upgrades, setUpgrades] = useState({ hp: 0, dmg: 0, stamina: 0, regen: 0 });
   const [healInBossActive, setHealInBossActive] = useState(false);
+  const [availablePowerUps, setAvailablePowerUps] = useState([]);
 
   // --- ATRIBUTOS BASHIRA ---
   const [pos, setPos] = useState(window.innerWidth / 2 - 50);
@@ -124,6 +125,25 @@ function App() {
     facingRef.current = facing;
   }, [pos, posY, facing]);
 
+  // --- LÓGICA DE ALEATORIEDADE DOS POWERUPS ---
+  const getRandomPowerUps = useCallback(() => {
+    const pool = [
+      { id: "hp", label: `+50 HP (${upgrades.hp}/4)`, disabled: upgrades.hp >= 4 },
+      { id: "dmg", label: `+20 Dmg (${upgrades.dmg}/4)`, disabled: upgrades.dmg >= 4 },
+      { id: "stamina", label: `+50 Stamina (${upgrades.stamina}/4)`, disabled: upgrades.stamina >= 4 },
+      { id: "regen", label: `+50% Stamina Regen (${upgrades.regen}/4)`, disabled: upgrades.regen >= 4 },
+      { id: "infinite", label: "Infinite Stamina Regen", disabled: staminaRegenJump },
+      { id: "healBoss", label: "Heal in Boss", disabled: healInBossActive },
+    ];
+
+    // Filtra apenas os que ainda podem ser escolhidos (não desativados)
+    const validOptions = pool.filter(opt => !opt.disabled);
+    
+    // Embaralha e escolhe 2
+    const shuffled = [...validOptions].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 2);
+  }, [upgrades, staminaRegenJump, healInBossActive]);
+
   const generateEnemies = (lvl) => {
     if (lvl === 3) {
       let initialEnemies = [];
@@ -163,6 +183,7 @@ function App() {
 
     if (aliveEnemies === 0) {
       if (level < 3) {
+        setAvailablePowerUps(getRandomPowerUps()); // Sorteia antes de mostrar
         setShowLevelUp(true);
       } else if (level === 3 && !bossExists) {
         const boss = {
@@ -174,25 +195,13 @@ function App() {
         if (bossAudioRef.current) bossAudioRef.current.play().catch(() => {});
       }
     }
-  }, [enemies, level, gameStarted, showLevelUp, gameVictory, maxHp, healInBossActive]);
+  }, [enemies, level, gameStarted, showLevelUp, gameVictory, maxHp, healInBossActive, getRandomPowerUps]);
 
   const applyPowerUpAndNextLevel = (type) => {
-    if (type === "hp" && upgrades.hp < 4) {
-      setMaxHp(prev => prev + 50); setHp(prev => prev + 50);
-      setUpgrades(prev => ({ ...prev, hp: prev.hp + 1 }));
-    }
-    if (type === "dmg" && upgrades.dmg < 4) {
-      setShurikenDmg(prev => prev + 20);
-      setUpgrades(prev => ({ ...prev, dmg: prev.dmg + 1 }));
-    }
-    if (type === "stamina" && upgrades.stamina < 4) {
-      setMaxStamina(prev => prev + 50); setStamina(prev => prev + 50);
-      setUpgrades(prev => ({ ...prev, stamina: prev.stamina + 1 }));
-    }
-    if (type === "regen" && upgrades.regen < 4) {
-      setStaminaRegenValue(prev => prev * 1.5);
-      setUpgrades(prev => ({ ...prev, regen: prev.regen + 1 }));
-    }
+    if (type === "hp") { setMaxHp(prev => prev + 50); setHp(prev => prev + 50); setUpgrades(prev => ({ ...prev, hp: prev.hp + 1 })); }
+    if (type === "dmg") { setShurikenDmg(prev => prev + 20); setUpgrades(prev => ({ ...prev, dmg: prev.dmg + 1 })); }
+    if (type === "stamina") { setMaxStamina(prev => prev + 50); setStamina(prev => prev + 50); setUpgrades(prev => ({ ...prev, stamina: prev.stamina + 1 })); }
+    if (type === "regen") { setStaminaRegenValue(prev => prev * 1.5); setUpgrades(prev => ({ ...prev, regen: prev.regen + 1 })); }
     if (type === "infinite") setStaminaRegenJump(true);
     if (type === "healBoss") setHealInBossActive(true);
 
@@ -245,18 +254,11 @@ function App() {
     }
 
     if (e.key.toLowerCase() === "f" && stamina >= 25 && posY === 0) {
-      if (throwSoundRef.current) {
-        throwSoundRef.current.currentTime = 0;
-        throwSoundRef.current.play().catch(() => {});
-      }
+      if (throwSoundRef.current) { throwSoundRef.current.currentTime = 0; throwSoundRef.current.play().catch(() => {}); }
       const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
       setShurikens((prev) => [...prev, { id: Date.now() + Math.random(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
       setStamina((s) => Math.max(s - 25, 0));
-
-      if (!staminaRegenJump) {
-        setIsRegenBlocked(true);
-        setTimeout(() => setIsRegenBlocked(false), 300);
-      }
+      if (!staminaRegenJump) { setIsRegenBlocked(true); setTimeout(() => setIsRegenBlocked(false), 300); }
     }
   }, [gameStarted, hp, isJumping, stamina, showLevelUp, gameVictory, staminaRegenJump, posY]);
 
@@ -283,9 +285,7 @@ function App() {
         prev.map((enemy) => {
           if (enemy.isDying && enemy.type === 3) {
              const t = Date.now();
-             if (t - enemy.lastFrameUpdate > 150) {
-                return { ...enemy, currentFrame: Math.min(enemy.currentFrame + 1, 12), lastFrameUpdate: t };
-             }
+             if (t - enemy.lastFrameUpdate > 150) { return { ...enemy, currentFrame: Math.min(enemy.currentFrame + 1, 12), lastFrameUpdate: t }; }
              return enemy;
           }
           if (enemy.hp <= 0 && enemy.type !== 3) return enemy;
@@ -302,9 +302,7 @@ function App() {
             enemy.currentFrame = nextFrame;
             enemy.lastFrameUpdate = tempoAgora;
           }
-          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 600) { 
-            enemy.isHurt = false; enemy.isAttacking = false; enemy.currentFrame = 0; 
-          }
+          if (enemy.isHurt && tempoAgora - enemy.lastHurt > 600) { enemy.isHurt = false; enemy.isAttacking = false; enemy.currentFrame = 0; }
           let nX = enemy.x + (enemy.isHurt || enemy.isDying ? 0 : enemy.dir * enemy.speed);
           let nDir = enemy.dir;
           if (nX > window.innerWidth - 100) nDir = -1;
@@ -312,11 +310,8 @@ function App() {
           const dist = Math.abs(nX - posRef.current);
           const hitboxHeight = enemy.type === 3 ? 120 : 100; 
           if (dist < (enemy.type === 3 ? 110 : 65) && posYRef.current < hitboxHeight) {
-             if (enemy.type === 3 && !enemy.isDying) {
-                enemy.isAttacking = true; setHp((h) => Math.max(h - 1.5, 0)); 
-             } else if (!enemy.isDying) {
-                setHp((h) => Math.max(h - 0.8, 0));
-             }
+             if (enemy.type === 3 && !enemy.isDying) { enemy.isAttacking = true; setHp((h) => Math.max(h - 1.5, 0)); } 
+             else if (!enemy.isDying) { setHp((h) => Math.max(h - 0.8, 0)); }
           } else if (enemy.type === 3) { enemy.isAttacking = false; }
           const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + (enemy.type === 3 ? 160 : 80));
           if (coll && !hitShurikenIds.includes(coll.id) && !enemy.isDying) {
@@ -337,9 +332,7 @@ function App() {
         })
       );
       setShurikens((prev) =>
-        prev.filter((s) => !hitShurikenIds.includes(s.id))
-          .map((s) => ({ ...s, x: s.x + 25 * s.dir }))
-          .filter((s) => s.x > -100 && s.x < window.innerWidth + 100)
+        prev.filter((s) => !hitShurikenIds.includes(s.id)).map((s) => ({ ...s, x: s.x + 25 * s.dir })).filter((s) => s.x > -100 && s.x < window.innerWidth + 100)
       );
     }, 1000 / 60);
     return () => clearInterval(engine);
@@ -352,9 +345,7 @@ function App() {
 
   useEffect(() => {
     let jumpAnim;
-    if (isJumping) {
-      setJumpFrame(1); jumpAnim = setInterval(() => setJumpFrame((prev) => Math.min(prev + 1, 12)), 60);
-    }
+    if (isJumping) { setJumpFrame(1); jumpAnim = setInterval(() => setJumpFrame((prev) => Math.min(prev + 1, 12)), 60); }
     return () => clearInterval(jumpAnim);
   }, [isJumping]);
 
@@ -415,13 +406,12 @@ function App() {
           {showLevelUp && (
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
-              <div className="powerup-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("hp")} disabled={upgrades.hp >= 4}>"+50 HP" ({upgrades.hp}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("dmg")} disabled={upgrades.dmg >= 4}>"+20 Dmg" ({upgrades.dmg}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")} disabled={upgrades.stamina >= 4}>"+50 Stamina" ({upgrades.stamina}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")} disabled={upgrades.regen >= 4}>"+50% Stamina Regen" ({upgrades.regen}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("infinite")} disabled={staminaRegenJump}>"Infinite Stamina Regen"</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("healBoss")} disabled={healInBossActive}>"Heal in Boss"</button>
+              <div className="powerup-container" style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                {availablePowerUps.map(pu => (
+                  <button key={pu.id} className="btn-powerup" onClick={() => applyPowerUpAndNextLevel(pu.id)}>
+                    {pu.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
