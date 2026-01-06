@@ -125,7 +125,6 @@ function App() {
     facingRef.current = facing;
   }, [pos, posY, facing]);
 
-  // --- LÓGICA DE ALEATORIEDADE DOS POWERUPS ---
   const getRandomPowerUps = useCallback(() => {
     const pool = [
       { id: "hp", label: `+50 HP (${upgrades.hp}/4)`, disabled: upgrades.hp >= 4 },
@@ -135,7 +134,6 @@ function App() {
       { id: "infinite", label: "Infinite Stamina Regen", disabled: staminaRegenJump },
       { id: "healBoss", label: "Heal in Boss", disabled: healInBossActive },
     ];
-
     const validOptions = pool.filter(opt => !opt.disabled);
     const shuffled = [...validOptions].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 2);
@@ -240,16 +238,10 @@ function App() {
   const handleKeyDown = useCallback((e) => {
     keysPressed.current[e.key] = true;
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
-
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) {
-      setIsJumping(true);
-      setVelY(28); 
-      if (!staminaRegenJump) {
-        setIsRegenBlocked(true);
-        setTimeout(() => setIsRegenBlocked(false), 500);
-      }
+      setIsJumping(true); setVelY(28); 
+      if (!staminaRegenJump) { setIsRegenBlocked(true); setTimeout(() => setIsRegenBlocked(false), 500); }
     }
-
     if (e.key.toLowerCase() === "f" && stamina >= 25 && posY === 0) {
       if (throwSoundRef.current) { throwSoundRef.current.currentTime = 0; throwSoundRef.current.play().catch(() => {}); }
       const startX = facingRef.current === 1 ? posRef.current + 60 : posRef.current - 20;
@@ -276,7 +268,6 @@ function App() {
         if (keysPressed.current["ArrowLeft"]) { newPos = Math.max(p - 8, 0); setFacing(-1); }
         return newPos;
       });
-
       let hitShurikenIds = [];
       setEnemies((prev) =>
         prev.map((enemy) => {
@@ -293,9 +284,7 @@ function App() {
               if (enemy.isHurt) nextFrame = Math.min(enemy.currentFrame + 1, 2);
               else if (enemy.isAttacking) nextFrame = (enemy.currentFrame + 1) % 6;
               else nextFrame = (enemy.currentFrame + 1) % 8;
-            } else {
-              nextFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6;
-            }
+            } else { nextFrame = enemy.isHurt ? Math.min(enemy.currentFrame + 1, 3) : (enemy.currentFrame + 1) % 6; }
             enemy.currentFrame = nextFrame;
             enemy.lastFrameUpdate = tempoAgora;
           }
@@ -369,7 +358,18 @@ function App() {
       ) : (
         <>
           <div className="hud">
-            <div>NÍVEL: {level}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div>NÍVEL: {level}</div>
+              {/* NOVA LISTA DE STATS ABAIXO DO NÍVEL */}
+              <div className="stats-list" style={{ fontSize: '14px', marginTop: '5px', textAlign: 'left', color: '#aaa', textShadow: '1px 1px 2px black' }}>
+                <div>Dmg - lvl {upgrades.dmg + 1}</div>
+                <div>HP - lvl {upgrades.hp + 1}</div>
+                <div>Stamina - lvl {upgrades.stamina + 1}</div>
+                <div>Stamina Regen - lvl {upgrades.regen + 1}</div>
+                {staminaRegenJump && <div style={{ color: '#00ff00' }}>Infinite Stamina Regen</div>}
+                {healInBossActive && <div style={{ color: '#00ff00' }}>Heal in Boss</div>}
+              </div>
+            </div>
             <div className="hud-center">PONTOS: {score}</div>
             <div>INIMIGOS: {enemies.filter((e) => e.hp > 0 || (e.type === 3 && e.isDying)).length}</div>
           </div>
