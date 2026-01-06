@@ -95,9 +95,9 @@ function App() {
   const [jumpFrame, setJumpFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
 
-  // --- Lógica de Spawn Aleatório ---
+  // --- Lógica de Spawn ---
   const [enemies, setEnemies] = useState([]);
-  const [spawnQueue, setSpawnQueue] = useState(15); // Total de inimigos para soltar
+  const [spawnQueue, setSpawnQueue] = useState(15); 
 
   const levelAudioRef = useRef(null);
   const bossAudioRef = useRef(null);
@@ -140,7 +140,6 @@ function App() {
     return shuffled.slice(0, 2);
   }, [upgrades, staminaRegenJump, healInBossActive]);
 
-  // Função para criar UM inimigo individual
   const spawnSingleEnemy = useCallback((lvl) => {
     const sideDir = Math.random() > 0.5 ? 1 : -1;
     const type = lvl === 1 ? 1 : (Math.random() > 0.6 ? 2 : 1);
@@ -156,12 +155,12 @@ function App() {
     setEnemies(prev => [...prev, newEnemy]);
   }, []);
 
-  // Motor do Spawn Aleatório
+  // Motor do Spawn Aleatório Ajustado (0.5s a 2s)
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory || spawnQueue <= 0 || level > 3) return;
 
-    // Timer base de 2.5 segundos, flutuando entre 1.5 e 3.5 segundos
-    const randomDelay = 2500 + (Math.random() * 2000 - 1000);
+    // 500ms fixos + (0 a 1500ms aleatórios) = total entre 500ms e 2000ms
+    const randomDelay = 500 + Math.random() * 1500;
 
     const timer = setTimeout(() => {
       spawnSingleEnemy(level);
@@ -176,7 +175,6 @@ function App() {
     const aliveEnemies = enemies.filter((e) => e.hp > 0).length;
     const bossExists = enemies.some(e => e.type === 3);
 
-    // Condição de fim de nível: Fila vazia E todos os inimigos mortos
     if (spawnQueue === 0 && aliveEnemies === 0) {
       if (level < 3) {
         setAvailablePowerUps(getRandomPowerUps());
@@ -204,7 +202,7 @@ function App() {
     const nextLvl = level + 1;
     setLevel(nextLvl);
     setEnemies([]);
-    setSpawnQueue(nextLvl === 2 ? 20 : (nextLvl === 3 ? 5 : 15)); // Configura tamanho da fila por nível
+    setSpawnQueue(nextLvl === 2 ? 20 : (nextLvl === 3 ? 5 : 15)); 
     setShurikens([]);
     setShowLevelUp(false);
     setPos(window.innerWidth / 2 - 50);
