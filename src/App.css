@@ -1,103 +1,243 @@
+/* --- CONFIGURAÇÃO GERAL DO ECRÃ --- */
 body, html {
-  margin: 0; padding: 0; overflow: hidden; background-color: #000;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #000;
+  width: 100%;
+  height: 100%;
 }
 
 .game-container {
-  width: 100vw; height: 100vh;
-  background: linear-gradient(to bottom, #3d1414, #1a0a0a);
-  position: relative; overflow: hidden;
-  font-family: 'Courier New', monospace; color: white;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to bottom, #0a0a2a 0%, #1a0a2a 100%);
+  overflow: hidden;
+  /* O chão vermelho */
+  border-bottom: 80px solid #4a0000; 
 }
 
-.game-container::after {
-  content: ''; position: absolute; bottom: 0; width: 100%; height: 80px;
-  background: #111; border-top: 4px solid #8b0000; z-index: 10;
+/* --- HUD E LISTA DE NÍVEIS --- */
+.hud {
+  position: absolute;
+  top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 40px;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  z-index: 100;
+  pointer-events: none;
 }
 
-.start-menu, .overlay {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
-  z-index: 500; background: rgba(0, 0, 0, 0.9);
+.hud-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.level-indicator {
+  font-size: 24px;
+  color: #ff0044;
+  text-shadow: 2px 2px #000;
+}
+
+.stats-list {
+  margin-top: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-left: 4px solid #ff0044;
+  border-radius: 0 10px 10px 0;
+}
+
+.stats-list p {
+  margin: 4px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.special-stat {
+  color: gold;
+  text-shadow: 0 0 8px orange;
+  font-weight: bold;
+}
+
+.hud-center {
+  font-size: 28px;
+  color: #fff;
+}
+
+/* --- BARRAS DE VIDA E STAMINA --- */
+.stats-container {
+  position: absolute;
+  top: 150px; /* Abaixo da lista de levels */
+  left: 40px;
+  z-index: 100;
+}
+
+.stat-group {
+  margin-bottom: 10px;
+}
+
+.bar-label {
+  color: white;
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-family: monospace;
+}
+
+.life-bar-outer, .stamina-bar-outer, .boss-bar-outer {
+  background: #222;
+  border: 2px solid #fff;
+  height: 20px;
+  width: 250px;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.life-bar-fill {
+  background: #ff0044;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.stamina-bar-fill {
+  background: #00ffcc;
+  height: 100%;
+  transition: width 0.1s ease;
+}
+
+.boss-hud-container {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 110;
+}
+
+.boss-bar-outer {
+  width: 500px;
+  height: 30px;
+  border: 3px solid #8a2be2;
+}
+
+.boss-bar-fill {
+  background: linear-gradient(90deg, #4b0082, #8a2be2);
+  height: 100%;
+}
+
+/* --- PERSONAGENS --- */
+.bashira {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  z-index: 50;
+}
+
+/* Frames Bashira (Mapeados para o JS) */
+.bashira.frame-1 { background-image: url('./assets/sprite_bashira_idle0.png'); }
+.bashira.frame-2 { background-image: url('./assets/sprite_bashira_idle1.png'); }
+.bashira.run-frame-1 { background-image: url('./assets/sprite_bashira_run0.png'); }
+.bashira.run-frame-2 { background-image: url('./assets/sprite_bashira_run1.png'); }
+.bashira.run-frame-3 { background-image: url('./assets/sprite_bashira_run2.png'); }
+.bashira.run-frame-4 { background-image: url('./assets/sprite_bashira_run3.png'); }
+
+/* Frames de Salto - Mapeia os 12 aqui conforme os nomes dos teus ficheiros */
+.bashira.jump-frame-1 { background-image: url('./assets/sprite_bashira_jump0.png'); }
+.bashira.jump-frame-2 { background-image: url('./assets/sprite_bashira_jump1.png'); }
+/* ... (podes continuar até ao 12 se tiveres os ficheiros) */
+
+.shuriken {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-image: url('./assets/shuriken.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  z-index: 45;
+  animation: spin 0.2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --- OVERLAYS --- */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .title-glow {
-  font-size: clamp(50px, 10vw, 120px); color: #ffd700;
-  text-shadow: 0 0 20px #ff0000, 5px 5px 0px #333;
-  letter-spacing: 15px; animation: pulse 2s infinite alternate;
+  font-size: 80px;
+  color: #ff0044;
+  text-shadow: 0 0 20px #ff0044;
+  margin-bottom: 40px;
 }
 
-.btn-start, .btn-powerup, .btn-retry {
-  padding: 20px 60px; background: #8b0000; color: white; font-size: 28px;
-  font-family: inherit; font-weight: bold; border: 4px solid #ffd700;
-  cursor: pointer; box-shadow: 0 0 20px rgba(139, 0, 0, 0.8);
-  text-transform: uppercase; transition: 0.3s;
+.btn-start, .btn-retry {
+  padding: 20px 50px;
+  font-size: 24px;
+  background: transparent;
+  color: white;
+  border: 4px solid #ff0044;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.btn-powerup { padding: 10px 25px; font-size: 14px; border-width: 3px; }
-.btn-retry { padding: 15px 40px; background: #1a1a1a; color: #ff4444; font-size: 22px; border: 2px solid #ff4444; }
-
-.btn-start:hover, .btn-powerup:hover { background: #ff0000; transform: scale(1.1); }
-
-.hud {
-  display: flex; justify-content: space-between; padding: 15px 40px;
-  background: rgba(0, 0, 0, 0.85); border-bottom: 2px solid #8b0000;
-  z-index: 100; position: relative;
+.btn-start:hover, .btn-retry:hover {
+  background: #ff0044;
+  box-shadow: 0 0 20px #ff0044;
 }
 
-.stats-container {
-  position: absolute; top: 75px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 30px; z-index: 100; background: rgba(0, 0, 0, 0.7);
-  padding: 10px 25px; border: 1px solid #8b0000; border-top: none;
+.powerup-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
 }
 
-/* BARRAS DE VIDA E STAMINA */
-.life-bar-outer, .stamina-bar-outer { height: 15px; background: #222; border: 1px solid #fff; }
-.life-bar-fill { height: 100%; background: #ff0000; transition: width 0.3s; }
-.stamina-bar-fill { height: 100%; background: #00ff00; transition: width 0.3s; }
-
-/* BARRA DO BOSS - IMPACTO TOTAL */
-.boss-hud-container {
-  position: absolute; top: 155px; left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; z-index: 100;
-}
-.boss-bar-outer {
-  width: 530px; /* Soma aproximada das duas barras + gap */
-  height: 18px; background: #222; border: 2px solid #8a2be2;
-}
-.boss-bar-fill { height: 100%; background: #8a2be2; box-shadow: 0 0 15px #8a2be2; transition: width 0.3s; }
-
-.bashira {
-  width: 100px; height: 140px; background-size: contain; background-repeat: no-repeat;
-  background-position: center; position: absolute; bottom: 50px; z-index: 50;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4)); transition: transform 0.1s;
+.btn-powerup {
+  padding: 20px;
+  width: 200px;
+  background: #1a1a1a;
+  color: white;
+  border: 2px solid #fff;
+  cursor: pointer;
+  font-size: 16px;
 }
 
-.bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
-.bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
-.bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
-.bashira.run-frame-2 { background-image: url('./assets/Correr-2.png'); }
-.bashira.run-frame-3 { background-image: url('./assets/Correr-3.png'); }
-.bashira.run-frame-4 { background-image: url('./assets/Correr-4.png'); }
-.bashira.jump-frame-1 { background-image: url('./assets/FinalizadoSalto-1.png'); }
-.bashira.jump-frame-2 { background-image: url('./assets/FinalizadoSalto-2.png'); }
-.bashira.jump-frame-3 { background-image: url('./assets/FinalizadoSalto-3.png'); }
-.bashira.jump-frame-4 { background-image: url('./assets/FinalizadoSalto-4.png'); }
-.bashira.jump-frame-5 { background-image: url('./assets/FinalizadoSalto-5.png'); }
-.bashira.jump-frame-6 { background-image: url('./assets/FinalizadoSalto-6.png'); }
-.bashira.jump-frame-7 { background-image: url('./assets/FinalizadoSalto-7.png'); }
-.bashira.jump-frame-8 { background-image: url('./assets/FinalizadoSalto-8.png'); }
-.bashira.jump-frame-9 { background-image: url('./assets/FinalizadoSalto-9.png'); }
-.bashira.jump-frame-10 { background-image: url('./assets/FinalizadoSalto-10.png'); }
-.bashira.jump-frame-11 { background-image: url('./assets/FinalizadoSalto-11.png'); }
-.bashira.jump-frame-12 { background-image: url('./assets/FinalizadoSalto-12.png'); }
-
-.shuriken {
-  width: 25px; height: 25px; background: #565151; position: absolute;
-  clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
-  animation: spin 0.1s linear infinite; z-index: 90;
+.btn-powerup:hover {
+  border-color: #ff0044;
+  background: #333;
 }
 
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+/* --- INIMIGOS --- */
+.enemy-hp-bar {
+  background: #333;
+  width: 60px;
+  height: 4px;
+  margin: 0 auto 5px auto;
+  border: 1px solid #000;
+}
+.enemy-hp-fill { background: red; height: 100%; }
 
-.powerup-container { display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+.ninja-red { width: 100px; image-rendering: pixelated; }
+.ninja-yellow { width: 120px; image-rendering: pixelated; }
+.boss-sprite { width: 350px; image-rendering: pixelated; }
