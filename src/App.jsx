@@ -481,4 +481,29 @@ function App() {
               <h1>NÍVEL CONCLUÍDO!</h1>
               <div className="powerup-container">
                 <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")}>+ STAMINA</button>
-                <button className="btn-powerup" onClick={() => applyPowerUp
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("health")}>+ VIDA</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")}>REGEN. INFINITA</button>
+              </div>
+            </div>
+          )}
+
+          {gameVictory && (
+            <div className="overlay">
+              <h1 className="title-glow">VITÓRIA TOTAL!</h1>
+              <button className="btn-retry" onClick={() => window.location.reload()}>JOGAR NOVAMENTE</button>
+            </div>
+          )}
+
+          {hp <= 0 && (
+            <div className="overlay">
+              <h1>DERROTADO</h1>
+              <button className="btn-retry" onClick={() => window.location.reload()}>RECOMEÇAR</button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default App;
