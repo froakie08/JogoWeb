@@ -97,8 +97,40 @@ body, html {
   border-top: none;
 }
 
+/* BOSS UI NO TOPO */
+.boss-ui-container {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boss-name {
+  font-size: 18px;
+  color: #ff0000;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 2px 2px 0px black;
+}
+
+.boss-bar-outer {
+  height: 12px;
+  background: #222;
+  border: 2px solid #ff0000;
+}
+
+.boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #8b0000, #ff0000);
+  transition: width 0.3s;
+}
+
+/* BARRAS DO JOGADOR */
 .life-bar-outer, .stamina-bar-outer {
-  width: 250px; 
   height: 15px;
   background: #222;
   border: 1px solid #fff;
@@ -114,12 +146,12 @@ body, html {
   background-repeat: no-repeat;
   background-position: center;
   position: absolute;
-  bottom: 50px;
   z-index: 50;
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
   transition: transform 0.1s;
 }
 
+/* Outras classes do Bashira mantêm-se iguais */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
@@ -188,19 +220,12 @@ body, html {
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
 }
 
-.overlay p {
-  font-size: 20px;
-  color: #ffd700;
-  margin-bottom: 10px;
-}
-
-/* Nova lista de stats dentro do jogo */
 .stats-list-container {
   position: absolute;
   top: 95px;
   left: 10px;
   display: grid;
-  grid-template-columns: 165px auto; /* Aumentado para o Stamina Regen não quebrar */
+  grid-template-columns: 165px auto;
   column-gap: 8px;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
@@ -209,18 +234,12 @@ body, html {
   pointer-events: none;
 }
 
-.stat-name {
-  text-align: right;
-  font-weight: bold;
-}
-
-.stat-value {
-  text-align: left;
-}
+.stat-name { text-align: right; font-weight: bold; }
+.stat-value { text-align: left; }
 
 .stat-special {
-  grid-column: 1; /* Força a ocupar apenas a primeira coluna */
-  justify-self: end; /* Alinha o fim do texto à direita desta coluna */
+  grid-column: 1;
+  justify-self: end;
   color: #00ff00;
   font-weight: bold;
   margin-top: 5px;

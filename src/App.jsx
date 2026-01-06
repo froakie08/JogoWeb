@@ -304,7 +304,7 @@ function App() {
                if (enemy.type === 3) {
                   if (bossAudioRef.current) bossAudioRef.current.pause();
                   if (levelVictoryRef.current) levelVictoryRef.current.play();
-                  setTimeout(() => setGameVictory(true), 10000);
+                  setTimeout(() => setGameVictory(true), 5000); // MUDADO PARA 5 SEGUNDOS
                   return { ...enemy, x: nX, hp: 0, isDying: true, currentFrame: 0, lastFrameUpdate: Date.now() };
                }
                setScore((s) => s + 100);
@@ -343,12 +343,13 @@ function App() {
     return () => clearInterval(runAnim);
   }, [isJumping, gameStarted, showLevelUp]);
 
-  // Função auxiliar para cores
   const getStatColor = (lvl) => {
     if (lvl >= 5) return "#00ff00"; 
     if (lvl > 1) return "#ffd700";  
     return "rgba(255, 255, 255, 0.7)"; 
   };
+
+  const currentBoss = enemies.find(e => e.type === 3);
 
   return (
     <div className="game-container">
@@ -368,16 +369,12 @@ function App() {
           <div className="stats-list-container">
             <span className="stat-name" style={{ color: getStatColor(upgrades.dmg + 1) }}>Dmg -</span>
             <span className="stat-value" style={{ color: getStatColor(upgrades.dmg + 1) }}>lvl {upgrades.dmg + 1}</span>
-            
             <span className="stat-name" style={{ color: getStatColor(upgrades.hp + 1) }}>HP -</span>
             <span className="stat-value" style={{ color: getStatColor(upgrades.hp + 1) }}>lvl {upgrades.hp + 1}</span>
-            
             <span className="stat-name" style={{ color: getStatColor(upgrades.stamina + 1) }}>Stamina -</span>
             <span className="stat-value" style={{ color: getStatColor(upgrades.stamina + 1) }}>lvl {upgrades.stamina + 1}</span>
-            
             <span className="stat-name" style={{ color: getStatColor(upgrades.regen + 1) }}>Stamina Regen -</span>
             <span className="stat-value" style={{ color: getStatColor(upgrades.regen + 1) }}>lvl {upgrades.regen + 1}</span>
-
             {staminaRegenJump && <div className="stat-special">Infinite Stamina Regen</div>}
             {healInBossActive && <div className="stat-special">Heal in Boss</div>}
           </div>
@@ -385,16 +382,30 @@ function App() {
           <div className="stats-container">
             <div className="stat-group">
               <div className="bar-label">VIDA</div>
-              <div className="life-bar-outer"><div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div></div>
+              <div className="life-bar-outer" style={{ width: `${maxHp * 2.5}px` }}>
+                <div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div>
+              </div>
             </div>
             <div className="stat-group">
               <div className="bar-label">STAMINA</div>
-              <div className="stamina-bar-outer"><div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div></div>
+              <div className="stamina-bar-outer" style={{ width: `${maxStamina * 2.5}px` }}>
+                <div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div>
+              </div>
             </div>
           </div>
 
+          {/* BARRA DE VIDA DO BOSS NO TOPO SE ELE EXISTIR */}
+          {currentBoss && !gameVictory && (
+            <div className="boss-ui-container">
+              <div className="boss-name">THE BOSS</div>
+              <div className="boss-bar-outer" style={{ width: `${maxHp * 2.5}px` }}>
+                <div className="boss-bar-fill" style={{ width: `${(currentBoss.hp / currentBoss.maxHp) * 100}%` }}></div>
+              </div>
+            </div>
+          )}
+
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`)}`}
-            style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing})` }}></div>
+            style={{ left: `${pos}px`, bottom: `${80 + posY}px`, transform: `scaleX(${facing})` }}></div>
 
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
             <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "45px" : "75px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
@@ -408,7 +419,7 @@ function App() {
             </div>
           ))}
 
-          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${90 + s.y}px` }}></div>)}
+          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${120 + s.y}px` }}></div>)}
 
           {showLevelUp && (
             <div className="overlay">
