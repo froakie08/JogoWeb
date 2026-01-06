@@ -197,17 +197,17 @@ body, html {
 /* Nova lista de stats dentro do jogo */
 .stats-list-container {
   position: absolute;
-  top: 90px; /* Ajusta para ficar abaixo da linha do HUD */
-  left: 20px;
+  top: 95px; /* Abaixo da linha vermelha do HUD */
+  left: 10px;
   display: grid;
-  grid-template-columns: 100px auto; /* Coluna 1 fixa o tamanho para alinhar a 2 */
+  grid-template-columns: 140px auto; /* Largura ajustada para Stamina Regen caber */
   column-gap: 8px;
-  font-family: 'Courier New', Courier, monospace; /* Dá um ar de RPG/Terminal */
+  font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7); /* Branco suave para não distrair */
+  color: rgba(255, 255, 255, 0.7);
   text-shadow: 2px 2px 2px black;
   z-index: 50;
-  pointer-events: none; /* Garante que não clicas nisto sem querer */
+  pointer-events: none;
 }
 
 .stat-name {
