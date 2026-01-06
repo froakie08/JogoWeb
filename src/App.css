@@ -15,6 +15,7 @@ body, html {
   color: white;
 }
 
+/* CHÃO / LINHA VERMELHA */
 .game-container::after {
   content: '';
   position: absolute;
@@ -97,9 +98,10 @@ body, html {
   border-top: none;
 }
 
+/* --- BARRA DO BOSS (ESTILO IGUAL ÀS OUTRAS) --- */
 .boss-ui-container {
   position: absolute;
-  top: 130px;
+  top: 135px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
@@ -109,22 +111,23 @@ body, html {
 }
 
 .boss-name {
-  font-size: 18px;
-  color: #ff0000;
+  font-size: 16px;
+  color: #a333ff; /* Roxo */
   font-weight: bold;
   margin-bottom: 5px;
   text-shadow: 2px 2px 0px black;
+  letter-spacing: 2px;
 }
 
 .boss-bar-outer {
-  height: 12px;
+  height: 15px; /* Mesma altura que as barras de cima */
   background: #222;
-  border: 2px solid #ff0000;
+  border: 1px solid #fff; /* Mesma borda que as outras */
 }
 
 .boss-bar-fill {
   height: 100%;
-  background: linear-gradient(to right, #8b0000, #ff0000);
+  background: linear-gradient(to right, #6a0dad, #a333ff); /* Roxo */
   transition: width 0.3s;
 }
 
@@ -149,6 +152,7 @@ body, html {
   transition: transform 0.1s;
 }
 
+/* Sprites Bashira */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
@@ -235,9 +239,9 @@ body, html {
 .stat-value { text-align: left; }
 
 .stat-special {
-  grid-column: 1 / span 2; /* Ocupa as duas colunas para não quebrar o texto longo */
-  text-align: right;       /* Mas o texto alinha-se à direita */
-  padding-right: calc(100% - 165px); /* Truque para a última letra bater na margem da coluna 1 */
+  grid-column: 1 / span 2;
+  text-align: right;
+  padding-right: calc(100% - 165px);
   color: #00ff00;
   font-weight: bold;
   margin-top: 5px;

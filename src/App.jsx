@@ -404,10 +404,10 @@ function App() {
           )}
 
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`)}`}
-            style={{ left: `${pos}px`, bottom: `${65 + posY}px`, transform: `scaleX(${facing})` }}></div>
+            style={{ left: `${pos}px`, bottom: `${77 + posY}px`, transform: `scaleX(${facing})` }}></div>
 
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
-            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "50px" : "75px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "60px" : "77px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
               {enemy.type !== 3 && (
                 <div style={{ background: "#333", width: enemy.type === 2 ? "100px" : "80px", height: "6px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
@@ -418,7 +418,7 @@ function App() {
             </div>
           ))}
 
-          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${120 + s.y}px` }}></div>)}
+          {shurikens.map((s) => <div key={s.id} className="shuriken" style={{ left: `${s.x}px`, bottom: `${135 + s.y}px` }}></div>)}
 
           {showLevelUp && (
             <div className="overlay">
