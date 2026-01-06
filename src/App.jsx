@@ -345,11 +345,11 @@ function App() {
 
   const theBoss = enemies.find(e => e.type === 3);
 
-  // Função para definir a cor do stat baseada no nível
+  // Função auxiliar para cores
   const getStatColor = (lvl) => {
-    if (lvl >= 5) return "#00ff00"; // Verde (Máximo)
-    if (lvl > 1) return "#ffd700";  // Amarelo (Evoluído)
-    return "rgba(255, 255, 255, 0.7)"; // Cinza (Base)
+    if (lvl >= 5) return "#00ff00"; 
+    if (lvl > 1) return "#ffd700";  
+    return "rgba(255, 255, 255, 0.7)"; 
   };
 
   return (
@@ -369,13 +369,16 @@ function App() {
 
           <div className="stats-list-container">
             <span className="stat-name" style={{ color: getStatColor(upgrades.dmg + 1) }}>Dmg -</span>
-            <span className="stat-value">lvl {upgrades.dmg + 1}</span>
+            <span className="stat-value" style={{ color: getStatColor(upgrades.dmg + 1) }}>lvl {upgrades.dmg + 1}</span>
+            
             <span className="stat-name" style={{ color: getStatColor(upgrades.hp + 1) }}>HP -</span>
-            <span className="stat-value">lvl {upgrades.hp + 1}</span>
+            <span className="stat-value" style={{ color: getStatColor(upgrades.hp + 1) }}>lvl {upgrades.hp + 1}</span>
+            
             <span className="stat-name" style={{ color: getStatColor(upgrades.stamina + 1) }}>Stamina -</span>
-            <span className="stat-value">lvl {upgrades.stamina + 1}</span>
+            <span className="stat-value" style={{ color: getStatColor(upgrades.stamina + 1) }}>lvl {upgrades.stamina + 1}</span>
+            
             <span className="stat-name" style={{ color: getStatColor(upgrades.regen + 1) }}>Stamina Regen -</span>
-            <span className="stat-value">lvl {upgrades.regen + 1}</span>
+            <span className="stat-value" style={{ color: getStatColor(upgrades.regen + 1) }}>lvl {upgrades.regen + 1}</span>
 
             {staminaRegenJump && <div className="stat-special">Infinite Stamina Regen</div>}
             {healInBossActive && <div className="stat-special">Heal in Boss</div>}

@@ -200,7 +200,7 @@ body, html {
   top: 95px;
   left: 10px;
   display: grid;
-  grid-template-columns: 140px auto; /* Largura ajustada */
+  grid-template-columns: 125px auto; /* Reduzi um pouco para o hífen alinhar com a ultima letra do stat */
   column-gap: 8px;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
@@ -212,20 +212,19 @@ body, html {
 .stat-name {
   text-align: right;
   font-weight: bold;
-  /* Cor controlada pelo JS */
+  /* Cor agora é injetada no JS para a linha toda */
 }
 
 .stat-value {
   text-align: left;
-  color: #fff;
+  /* Cor agora é injetada no JS */
 }
 
 .stat-special {
-  grid-column: 1; /* Colocamos na primeira coluna */
-  justify-self: end; /* Alinhamos à direita desta coluna */
+  grid-column: 1; /* Força a ficar na coluna do nome do stat */
+  justify-self: end; /* Alinha o fim do texto com o fim da coluna 1 */
   color: #00ff00;
   font-weight: bold;
   margin-top: 5px;
-  text-align: right;
   white-space: nowrap;
 }
