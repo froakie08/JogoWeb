@@ -97,7 +97,6 @@ body, html {
   border-top: none;
 }
 
-/* BOSS UI NO TOPO */
 .boss-ui-container {
   position: absolute;
   top: 130px;
@@ -129,7 +128,6 @@ body, html {
   transition: width 0.3s;
 }
 
-/* BARRAS DO JOGADOR */
 .life-bar-outer, .stamina-bar-outer {
   height: 15px;
   background: #222;
@@ -151,7 +149,6 @@ body, html {
   transition: transform 0.1s;
 }
 
-/* Outras classes do Bashira mantêm-se iguais */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }
@@ -238,8 +235,9 @@ body, html {
 .stat-value { text-align: left; }
 
 .stat-special {
-  grid-column: 1;
-  justify-self: end;
+  grid-column: 1 / span 2; /* Ocupa as duas colunas para não quebrar o texto longo */
+  text-align: right;       /* Mas o texto alinha-se à direita */
+  padding-right: calc(100% - 165px); /* Truque para a última letra bater na margem da coluna 1 */
   color: #00ff00;
   font-weight: bold;
   margin-top: 5px;

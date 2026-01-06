@@ -304,7 +304,7 @@ function App() {
                if (enemy.type === 3) {
                   if (bossAudioRef.current) bossAudioRef.current.pause();
                   if (levelVictoryRef.current) levelVictoryRef.current.play();
-                  setTimeout(() => setGameVictory(true), 5000); // MUDADO PARA 5 SEGUNDOS
+                  setTimeout(() => setGameVictory(true), 5000); 
                   return { ...enemy, x: nX, hp: 0, isDying: true, currentFrame: 0, lastFrameUpdate: Date.now() };
                }
                setScore((s) => s + 100);
@@ -394,7 +394,6 @@ function App() {
             </div>
           </div>
 
-          {/* BARRA DE VIDA DO BOSS NO TOPO SE ELE EXISTIR */}
           {currentBoss && !gameVictory && (
             <div className="boss-ui-container">
               <div className="boss-name">THE BOSS</div>
