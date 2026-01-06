@@ -136,10 +136,7 @@ function App() {
       { id: "healBoss", label: "Heal in Boss", disabled: healInBossActive },
     ];
 
-    // Filtra apenas os que ainda podem ser escolhidos (não desativados)
     const validOptions = pool.filter(opt => !opt.disabled);
-    
-    // Embaralha e escolhe 2
     const shuffled = [...validOptions].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 2);
   }, [upgrades, staminaRegenJump, healInBossActive]);
@@ -183,7 +180,7 @@ function App() {
 
     if (aliveEnemies === 0) {
       if (level < 3) {
-        setAvailablePowerUps(getRandomPowerUps()); // Sorteia antes de mostrar
+        setAvailablePowerUps(getRandomPowerUps());
         setShowLevelUp(true);
       } else if (level === 3 && !bossExists) {
         const boss = {
@@ -395,7 +392,7 @@ function App() {
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
             style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}></div>
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
-            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "75px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "45px" : "75px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
               {enemy.type !== 3 && (
                 <div style={{ background: "#333", width: enemy.type === 2 ? "100px" : "80px", height: "6px", marginBottom: "5px" }}><div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div></div>
               )}
