@@ -84,62 +84,85 @@ body, html {
   position: relative;
 }
 
+/* CONTAINER DAS BARRAS */
 .stats-container {
   position: absolute;
   top: 75px; 
   left: 50%; 
   transform: translateX(-50%); 
   display: flex;
-  gap: 30px;
+  flex-direction: column; 
+  align-items: center;
+  gap: 15px;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 10px 25px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px 20px;
   border: 1px solid #8b0000;
   border-top: none;
+  border-radius: 0 0 10px 10px;
 }
 
-/* --- BARRA DO BOSS (ESTILO IGUAL ÀS OUTRAS) --- */
-.boss-ui-container {
-  position: absolute;
-  top: 135px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
+.merged-bars {
+  display: flex;
+  gap: 0px; /* COLADAS COMO PEDISTE */
+  border: 1px solid #fff;
+  overflow: hidden;
+}
+
+.stat-group {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.boss-name {
-  font-size: 16px;
-  color: #a333ff; /* Roxo */
-  font-weight: bold;
+.bar-label {
+  font-size: 10px;
   margin-bottom: 5px;
-  text-shadow: 2px 2px 0px black;
+  color: #aaa;
   letter-spacing: 2px;
-}
-
-.boss-bar-outer {
-  height: 15px; /* Mesma altura que as barras de cima */
-  background: #222;
-  border: 1px solid #fff; /* Mesma borda que as outras */
-}
-
-.boss-bar-fill {
-  height: 100%;
-  background: linear-gradient(to right, #6a0dad, #a333ff); /* Roxo */
-  transition: width 0.3s;
 }
 
 .life-bar-outer, .stamina-bar-outer {
   height: 15px;
   background: #222;
-  border: 1px solid #fff;
 }
 
 .life-bar-fill { height: 100%; background: #ff0000; transition: width 0.3s; }
 .stamina-bar-fill { height: 100%; background: #00ff00; transition: width 0.3s; }
 
+/* BARRA DO BOSS NEON */
+.boss-stat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.boss-name-label {
+  font-size: 14px;
+  color: #a333ff;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 8px #a333ff;
+}
+
+.boss-bar-outer-unified {
+  height: 12px;
+  background: #111;
+  border: 1px solid #fff;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
+  overflow: hidden;
+}
+
+.boss-bar-fill-neon {
+  height: 100%;
+  background: linear-gradient(90deg, #4b0082, #8a2be2, #d8bfd8);
+  box-shadow: 0 0 15px #a333ff, inset 0 0 5px white;
+  transition: width 0.4s ease-out;
+}
+
+/* PERSONAGEM E OUTROS */
 .bashira {
   width: 100px;
   height: 140px;
@@ -152,7 +175,6 @@ body, html {
   transition: transform 0.1s;
 }
 
-/* Sprites Bashira */
 .bashira.frame-1 { background-image: url('./assets/BashiraParado1.png'); }
 .bashira.frame-2 { background-image: url('./assets/BashiraParado2.png'); }
 .bashira.run-frame-1 { background-image: url('./assets/Correr-1.png'); }

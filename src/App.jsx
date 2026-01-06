@@ -380,28 +380,29 @@ function App() {
           </div>
           
           <div className="stats-container">
-            <div className="stat-group">
-              <div className="bar-label">VIDA</div>
-              <div className="life-bar-outer" style={{ width: `${maxHp * 2.5}px` }}>
-                <div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div>
+            <div className="player-stats-row">
+              <div className="stat-group">
+                <div className="bar-label">VIDA / STAMINA</div>
+                <div className="merged-bars">
+                  <div className="life-bar-outer" style={{ width: `${maxHp * 2.5}px` }}>
+                    <div className="life-bar-fill" style={{ width: `${(hp / maxHp) * 100}%` }}></div>
+                  </div>
+                  <div className="stamina-bar-outer" style={{ width: `${maxStamina * 2.5}px` }}>
+                    <div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="stat-group">
-              <div className="bar-label">STAMINA</div>
-              <div className="stamina-bar-outer" style={{ width: `${maxStamina * 2.5}px` }}>
-                <div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div>
-              </div>
-            </div>
-          </div>
 
-          {currentBoss && !gameVictory && (
-            <div className="boss-ui-container">
-              <div className="boss-name">THE BOSS</div>
-              <div className="boss-bar-outer" style={{ width: `${maxHp * 2.5}px` }}>
-                <div className="boss-bar-fill" style={{ width: `${(currentBoss.hp / currentBoss.maxHp) * 100}%` }}></div>
+            {currentBoss && !gameVictory && (
+              <div className="boss-stat-row">
+                <div className="boss-name-label">THE BOSS</div>
+                <div className="boss-bar-outer-unified" style={{ width: `${(maxHp * 2.5) + (maxStamina * 2.5)}px` }}>
+                  <div className="boss-bar-fill-neon" style={{ width: `${(currentBoss.hp / currentBoss.maxHp) * 100}%` }}></div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`)}`}
             style={{ left: `${pos}px`, bottom: `${77 + posY}px`, transform: `scaleX(${facing})` }}></div>
