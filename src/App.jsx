@@ -95,7 +95,6 @@ function App() {
   const [jumpFrame, setJumpFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
 
-  // --- Lógica de Spawn ---
   const [enemies, setEnemies] = useState([]);
   const [spawnQueue, setSpawnQueue] = useState(15); 
 
@@ -155,18 +154,13 @@ function App() {
     setEnemies(prev => [...prev, newEnemy]);
   }, []);
 
-  // Motor do Spawn Aleatório Ajustado (0.5s a 2s)
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory || spawnQueue <= 0 || level > 3) return;
-
-    // 500ms fixos + (0 a 1500ms aleatórios) = total entre 500ms e 2000ms
     const randomDelay = 500 + Math.random() * 1500;
-
     const timer = setTimeout(() => {
       spawnSingleEnemy(level);
       setSpawnQueue(prev => prev - 1);
     }, randomDelay);
-
     return () => clearTimeout(timer);
   }, [gameStarted, showLevelUp, gameVictory, spawnQueue, level, spawnSingleEnemy]);
 
@@ -307,7 +301,8 @@ function App() {
                if (enemy.type === 3) {
                   if (bossAudioRef.current) bossAudioRef.current.pause();
                   if (levelVictoryRef.current) levelVictoryRef.current.play();
-                  setTimeout(() => setGameVictory(true), 4000); 
+                  // --- ALTERADO DE 4000 PARA 3000 ---
+                  setTimeout(() => setGameVictory(true), 3000); 
                   return { ...enemy, x: nX, hp: 0, isDying: true, currentFrame: 0, lastFrameUpdate: Date.now() };
                }
                setScore((s) => s + 100);
@@ -411,7 +406,10 @@ function App() {
             style={{ left: `${pos}px`, bottom: `${82 + posY}px`, transform: `scaleX(${facing})` }}></div>
 
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
-            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "74px" : "77px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+            <div key={enemy.id} style={{ left: `${enemy.x}px`, 
+              /* AJUSTE NA POSIÇÃO DO BOSS: 60px EM VEZ DE 74px */
+              bottom: enemy.type === 3 ? "60px" : "77px", 
+              position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
               {enemy.type !== 3 && (
                 <div style={{ background: "#333", width: enemy.type === 2 ? "100px" : "80px", height: "6px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>
