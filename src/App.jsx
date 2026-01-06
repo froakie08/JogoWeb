@@ -134,8 +134,8 @@ function App() {
         initialEnemies.push({
           id: `lvl3-ninja-${i}`,
           x: sideDir === 1 ? -200 - i * 400 : window.innerWidth + 200 + i * 400,
-          hp: 280,
-          maxHp: 280,
+          hp: 350, // ALTERADO: Inimigo 2 HP
+          maxHp: 350,
           dir: sideDir,
           speed: 2.2,
           currentFrame: 0,
@@ -154,7 +154,7 @@ function App() {
       for (let i = 0; i < countPerSide; i++) {
         const type = lvl === 1 ? 1 : (Math.random() > 0.5 ? 2 : 1);
         const spawnDistance = 450;
-        const enemyHp = type === 1 ? 100 : 280;
+        const enemyHp = type === 1 ? 125 : 350; // ALTERADO: Inimigo 1 (125) e 2 (350)
         allEnemies.push({
           id: `enemy-${lvl}-${sideDir}-${i}-${Math.random()}`,
           x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
@@ -189,10 +189,10 @@ function App() {
         const boss = {
           id: "THE-BOSS",
           x: -300,
-          hp: 3000, // VIDA AUMENTADA 100%
-          maxHp: 3000,
+          hp: 5000, // ALTERADO: Vida do Boss para 5000
+          maxHp: 5000,
           dir: 1,
-          speed: 2.4, // VELOCIDADE AUMENTADA 20%
+          speed: 2.4, 
           currentFrame: 0,
           lastFrameUpdate: Date.now(),
           isHurt: false,
@@ -258,7 +258,7 @@ function App() {
 
     if ((e.key === "ArrowUp" || e.code === "Space") && !isJumping) {
       setIsJumping(true);
-      setVelY(28); // SALTO MANTIDO EM 28
+      setVelY(28); 
       if (!staminaRegenJump) {
         setIsRegenBlocked(true);
         setTimeout(() => setIsRegenBlocked(false), 500);
@@ -299,7 +299,6 @@ function App() {
       let hitShurikenIds = [];
       setEnemies((prev) =>
         prev.map((enemy) => {
-          // Lógica de Morte do Boss
           if (enemy.isDying && enemy.type === 3) {
              const t = Date.now();
              if (t - enemy.lastFrameUpdate > 150) {
@@ -311,7 +310,6 @@ function App() {
 
           const tempoAgora = Date.now();
           
-          // Animação dos Inimigos
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             let nextFrame = enemy.currentFrame;
             if (enemy.type === 3) {
@@ -336,14 +334,13 @@ function App() {
           if (nX > window.innerWidth - 100) nDir = -1;
           if (nX < -100) nDir = 1;
 
-          // Colisão com Bashira (Ajustada para o Salto)
           const dist = Math.abs(nX - posRef.current);
-          const hitboxHeight = enemy.type === 3 ? 120 : 100; // REDUZIDO PARA PERMITIR SALTO
+          const hitboxHeight = enemy.type === 3 ? 120 : 100; 
 
           if (dist < (enemy.type === 3 ? 110 : 65) && posYRef.current < hitboxHeight) {
              if (enemy.type === 3 && !enemy.isDying) {
                 enemy.isAttacking = true;
-                setHp((h) => Math.max(h - 1.5, 0)); // Dano do Boss ligeiramente aumentado
+                setHp((h) => Math.max(h - 1.5, 0)); 
              } else if (!enemy.isDying) {
                 setHp((h) => Math.max(h - 0.8, 0));
              }
@@ -351,11 +348,10 @@ function App() {
              enemy.isAttacking = false;
           }
 
-          // Colisão com Shuriken
           const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + (enemy.type === 3 ? 160 : 80));
           if (coll && !hitShurikenIds.includes(coll.id) && !enemy.isDying) {
             hitShurikenIds.push(coll.id);
-            let nHp = enemy.hp - 34;
+            let nHp = enemy.hp - 40; // ALTERADO: Dano da Shuriken para 40
             
             if (nHp <= 0) {
                if (enemy.type === 3) {
@@ -437,7 +433,6 @@ function App() {
                 <div className="stamina-bar-fill" style={{ width: `${(stamina / maxStamina) * 100}%` }}></div>
               </div>
             </div>
-            {/* BOSS HUD FIXA NO TOPO */}
             {theBoss && (
               <div className="stat-group boss-hud-top">
                 <div className="bar-label" style={{ color: "#8a2be2", fontWeight: "bold" }}>BOSS HP</div>
