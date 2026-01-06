@@ -489,11 +489,21 @@ function App() {
             <div className="overlay level-up">
               <h1>NÍVEL CONCLUÍDO!</h1>
               <div className="powerup-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("hp")} disabled={upgrades.hp >= 4}>+50 HP ({upgrades.hp}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("dmg")} disabled={upgrades.dmg >= 4}>+20 Dmg ({upgrades.dmg}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")} disabled={upgrades.stamina >= 4}>+50 Stamina ({upgrades.stamina}/4)</button>
-                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")} disabled={upgrades.regen >= 4}>+50% Regen ({upgrades.regen}/4)</button>
-                <button className="btn-powerup" style={{ gridColumn: 'span 2' }} onClick={() => applyPowerUpAndNextLevel("infinite")}>Infinite Stamina Regen</button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("hp")} disabled={upgrades.hp >= 4}>
+                  "+50 HP" ({upgrades.hp}/4)
+                </button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("dmg")} disabled={upgrades.dmg >= 4}>
+                  "+20 Dmg" ({upgrades.dmg}/4)
+                </button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("stamina")} disabled={upgrades.stamina >= 4}>
+                  "+50 Stamina" ({upgrades.stamina}/4)
+                </button>
+                <button className="btn-powerup" onClick={() => applyPowerUpAndNextLevel("regen")} disabled={upgrades.regen >= 4}>
+                  "+50% Stamina Regen" ({upgrades.regen}/4)
+                </button>
+                <button className="btn-powerup" style={{ gridColumn: 'span 2' }} onClick={() => applyPowerUpAndNextLevel("infinite")}>
+                  "Infinite Stamina Regen"
+                </button>
               </div>
             </div>
           )}
