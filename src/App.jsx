@@ -169,7 +169,7 @@ function App() {
           id: "THE-BOSS", x: -300, hp: 5000, maxHp: 5000, dir: 1, speed: 2.4, currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0, isAttacking: false, isDying: false, type: 3
         };
         setEnemies([boss]);
-        if (healInBossActive) setHp(maxHp); // HEAL NO BOSS ATRAVÉS DO POWERUP
+        if (healInBossActive) setHp(maxHp); 
         if (levelAudioRef.current) levelAudioRef.current.pause();
         if (bossAudioRef.current) bossAudioRef.current.play().catch(() => {});
       }
@@ -208,7 +208,6 @@ function App() {
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const reg = setInterval(() => {
-      // REGEN SÓ FUNCIONA SE NÃO ESTIVER BLOQUEADO OU SE TIVER O INFINITE
       if (staminaRegenJump || !isRegenBlocked) {
         setStamina((s) => Math.min(s + staminaRegenValue, maxStamina));
       }
@@ -254,7 +253,6 @@ function App() {
       setShurikens((prev) => [...prev, { id: Date.now() + Math.random(), x: startX, y: posYRef.current + 14, dir: facingRef.current }]);
       setStamina((s) => Math.max(s - 25, 0));
 
-      // BLOQUEIO DE REGEN POR 0.3s AO DISPARAR
       if (!staminaRegenJump) {
         setIsRegenBlocked(true);
         setTimeout(() => setIsRegenBlocked(false), 300);
@@ -406,7 +404,7 @@ function App() {
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`}`}
             style={{ left: `${pos}px`, bottom: `${50 + posY}px`, transform: `scaleX(${facing}) scale(0.85)` }}></div>
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
-            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "50px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: "58px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
               {enemy.type !== 3 && (
                 <div style={{ background: "#333", width: enemy.type === 2 ? "100px" : "80px", height: "6px", marginBottom: "5px" }}><div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div></div>
               )}
