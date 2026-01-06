@@ -95,6 +95,10 @@ function App() {
   const [jumpFrame, setJumpFrame] = useState(1);
   const [runFrame, setRunFrame] = useState(1);
 
+  // --- Lógica de Spawn Aleatório ---
+  const [enemies, setEnemies] = useState([]);
+  const [spawnQueue, setSpawnQueue] = useState(15); // Total de inimigos para soltar
+
   const levelAudioRef = useRef(null);
   const bossAudioRef = useRef(null);
   const defeatSoundRef = useRef(null);
@@ -136,44 +140,44 @@ function App() {
     return shuffled.slice(0, 2);
   }, [upgrades, staminaRegenJump, healInBossActive]);
 
-  const generateEnemies = (lvl) => {
-    if (lvl === 3) {
-      let initialEnemies = [];
-      for (let i = 0; i < 5; i++) {
-        const sideDir = i % 2 === 0 ? 1 : -1;
-        initialEnemies.push({
-          id: `lvl3-ninja-${i}`,
-          x: sideDir === 1 ? -200 - i * 400 : window.innerWidth + 200 + i * 400,
-          hp: 350, maxHp: 350, dir: sideDir, speed: 2.2, currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0, type: 2
-        });
-      }
-      return initialEnemies;
-    }
-    const countPerSide = lvl === 1 ? 8 : 10;
-    let allEnemies = [];
-    [1, -1].forEach((sideDir) => {
-      for (let i = 0; i < countPerSide; i++) {
-        const type = lvl === 1 ? 1 : (Math.random() > 0.5 ? 2 : 1);
-        const spawnDistance = 450;
-        const enemyHp = type === 1 ? 125 : 350;
-        allEnemies.push({
-          id: `enemy-${lvl}-${sideDir}-${i}-${Math.random()}`,
-          x: sideDir === 1 ? -200 - i * spawnDistance : window.innerWidth + 200 + i * spawnDistance,
-          hp: enemyHp, maxHp: enemyHp, dir: sideDir, speed: type === 1 ? 3 : 2.2, currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0, type: type
-        });
-      }
-    });
-    return lvl === 1 ? allEnemies.slice(0, 15) : allEnemies;
-  };
+  // Função para criar UM inimigo individual
+  const spawnSingleEnemy = useCallback((lvl) => {
+    const sideDir = Math.random() > 0.5 ? 1 : -1;
+    const type = lvl === 1 ? 1 : (Math.random() > 0.6 ? 2 : 1);
+    const enemyHp = type === 1 ? 125 : 350;
+    
+    const newEnemy = {
+      id: `enemy-${Date.now()}-${Math.random()}`,
+      x: sideDir === 1 ? -150 : window.innerWidth + 150,
+      hp: enemyHp, maxHp: enemyHp, dir: sideDir, speed: type === 1 ? 3 : 2.2, 
+      currentFrame: 0, lastFrameUpdate: Date.now(), isHurt: false, lastHurt: 0, type: type
+    };
+    
+    setEnemies(prev => [...prev, newEnemy]);
+  }, []);
 
-  const [enemies, setEnemies] = useState(() => generateEnemies(1));
+  // Motor do Spawn Aleatório
+  useEffect(() => {
+    if (!gameStarted || showLevelUp || gameVictory || spawnQueue <= 0 || level > 3) return;
+
+    // Timer base de 2.5 segundos, flutuando entre 1.5 e 3.5 segundos
+    const randomDelay = 2500 + (Math.random() * 2000 - 1000);
+
+    const timer = setTimeout(() => {
+      spawnSingleEnemy(level);
+      setSpawnQueue(prev => prev - 1);
+    }, randomDelay);
+
+    return () => clearTimeout(timer);
+  }, [gameStarted, showLevelUp, gameVictory, spawnQueue, level, spawnSingleEnemy]);
 
   useEffect(() => {
     if (!gameStarted || showLevelUp || gameVictory) return;
     const aliveEnemies = enemies.filter((e) => e.hp > 0).length;
     const bossExists = enemies.some(e => e.type === 3);
 
-    if (aliveEnemies === 0) {
+    // Condição de fim de nível: Fila vazia E todos os inimigos mortos
+    if (spawnQueue === 0 && aliveEnemies === 0) {
       if (level < 3) {
         setAvailablePowerUps(getRandomPowerUps());
         setShowLevelUp(true);
@@ -187,7 +191,7 @@ function App() {
         if (bossAudioRef.current) bossAudioRef.current.play().catch(() => {});
       }
     }
-  }, [enemies, level, gameStarted, showLevelUp, gameVictory, maxHp, healInBossActive, getRandomPowerUps]);
+  }, [enemies, level, gameStarted, showLevelUp, gameVictory, maxHp, healInBossActive, getRandomPowerUps, spawnQueue]);
 
   const applyPowerUpAndNextLevel = (type) => {
     if (type === "hp") { setMaxHp(prev => prev + 50); setHp(prev => prev + 50); setUpgrades(prev => ({ ...prev, hp: prev.hp + 1 })); }
@@ -199,7 +203,8 @@ function App() {
 
     const nextLvl = level + 1;
     setLevel(nextLvl);
-    setEnemies(generateEnemies(nextLvl));
+    setEnemies([]);
+    setSpawnQueue(nextLvl === 2 ? 20 : (nextLvl === 3 ? 5 : 15)); // Configura tamanho da fila por nível
     setShurikens([]);
     setShowLevelUp(false);
     setPos(window.innerWidth / 2 - 50);
@@ -304,7 +309,7 @@ function App() {
                if (enemy.type === 3) {
                   if (bossAudioRef.current) bossAudioRef.current.pause();
                   if (levelVictoryRef.current) levelVictoryRef.current.play();
-                  setTimeout(() => setGameVictory(true), 5000); 
+                  setTimeout(() => setGameVictory(true), 4000); 
                   return { ...enemy, x: nX, hp: 0, isDying: true, currentFrame: 0, lastFrameUpdate: Date.now() };
                }
                setScore((s) => s + 100);
@@ -363,7 +368,7 @@ function App() {
           <div className="hud">
             <div>NÍVEL: {level}</div>
             <div className="hud-center">PONTOS: {score}</div>
-            <div>INIMIGOS: {enemies.filter((e) => e.hp > 0 || (e.type === 3 && e.isDying)).length}</div>
+            <div>INIMIGOS RESTANTES: {spawnQueue + enemies.filter((e) => e.hp > 0 || (e.type === 3 && e.isDying)).length}</div>
           </div>
 
           <div className="stats-list-container">
@@ -405,10 +410,10 @@ function App() {
           </div>
 
           <div className={`bashira ${isJumping ? `jump-frame-${jumpFrame}` : (keysPressed.current["ArrowRight"] || keysPressed.current["ArrowLeft"] ? `run-frame-${runFrame}` : `frame-${idleFrame}`)}`}
-            style={{ left: `${pos}px`, bottom: `${77 + posY}px`, transform: `scaleX(${facing})` }}></div>
+            style={{ left: `${pos}px`, bottom: `${82 + posY}px`, transform: `scaleX(${facing})` }}></div>
 
           {enemies.map((enemy) => (enemy.hp > 0 || enemy.isDying) && (
-            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "60px" : "77px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
+            <div key={enemy.id} style={{ left: `${enemy.x}px`, bottom: enemy.type === 3 ? "74px" : "77px", position: "absolute", transform: `scaleX(${enemy.dir})`, zIndex: 100 }}>
               {enemy.type !== 3 && (
                 <div style={{ background: "#333", width: enemy.type === 2 ? "100px" : "80px", height: "6px", marginBottom: "5px" }}>
                   <div style={{ background: "red", height: "100%", width: `${(enemy.hp / enemy.maxHp) * 100}%` }}></div>

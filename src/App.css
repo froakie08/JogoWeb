@@ -78,6 +78,11 @@ body, html {
   position: relative;
 }
 
+.hud-center {
+  font-weight: bold;
+  color: #ffd700;
+}
+
 .stats-container {
   position: absolute;
   top: 75px; 
@@ -153,10 +158,9 @@ body, html {
   transition: width 0.4s ease-out;
 }
 
-/* --- VOLTAR AOS TAMANHOS ORIGINAIS --- */
 .bashira {
   width: 100px;
-  height: 100px; /* BASHIRA VOLTA A SER O MAIS BAIXO */
+  height: 100px; 
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
