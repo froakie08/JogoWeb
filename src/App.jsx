@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 
-// --- INIMIGO 1 ---
+// --- IMPORTS DOS ASSETS (MANTÊM-SE IGUAIS) ---
 import e1Idle0 from "./assets/sprite_idle0.png";
 import e1Idle1 from "./assets/sprite_idle1.png";
 import e1Idle2 from "./assets/sprite_idle2.png";
@@ -13,7 +13,6 @@ import e1Hurt1 from "./assets/sprite_hurt1.png";
 import e1Hurt2 from "./assets/sprite_hurt2.png";
 import e1Hurt3 from "./assets/sprite_hurt3.png";
 
-// --- INIMIGO 2 ---
 import e2Walk0 from "./assets/yellowninjawalk0.png";
 import e2Walk1 from "./assets/yellowninjawalk1.png";
 import e2Walk2 from "./assets/yellowninjawalk2.png";
@@ -25,7 +24,6 @@ import e2Hurt1 from "./assets/yellowninjahurt1.png";
 import e2Hurt2 from "./assets/yellowninjahurt2.png";
 import e2Hurt3 from "./assets/yellowninjahurt3.png";
 
-// --- BOSS ASSETS ---
 import bossMove0 from "./assets/bossmove0.png";
 import bossMove1 from "./assets/bossmove1.png";
 import bossMove2 from "./assets/bossmove2.png";
@@ -61,7 +59,6 @@ const enemy1IdleFrames = [e1Idle0, e1Idle1, e1Idle2, e1Idle3, e1Idle4, e1Idle5];
 const enemy1HurtFrames = [e1Hurt0, e1Hurt1, e1Hurt2, e1Hurt3];
 const enemy2WalkFrames = [e2Walk0, e2Walk1, e2Walk2, e2Walk3, e2Walk4, e2Walk5];
 const enemy2HurtFrames = [e2Hurt0, e2Hurt1, e2Hurt2, e2Hurt3];
-
 const bossMoveFrames = [bossMove0, bossMove1, bossMove2, bossMove3, bossMove4, bossMove5, bossMove6, bossMove7];
 const bossAtkFrames = [bossAtk0, bossAtk1, bossAtk2, bossAtk3, bossAtk4, bossAtk5];
 const bossHurtFrames = [bossHurt0, bossHurt1, bossHurt2];
@@ -124,7 +121,6 @@ function App() {
 
   const generateEnemies = (lvl) => {
     if (lvl === 3) {
-      // Começamos apenas com 5 ninjas amarelos
       let initialEnemies = [];
       for (let i = 0; i < 5; i++) {
         const sideDir = i % 2 === 0 ? 1 : -1;
@@ -172,14 +168,20 @@ function App() {
 
   const [enemies, setEnemies] = useState(() => generateEnemies(1));
 
-  // --- LÓGICA DE SPAWN DO BOSS ---
+  // --- CORREÇÃO DA LÓGICA DE VITÓRIA E NÍVEL ---
   useEffect(() => {
-    if (level === 3 && gameStarted) {
-      const aliveEnemies = enemies.filter((e) => e.hp > 0).length;
-      const bossExists = enemies.some(e => e.type === 3);
-      
-      if (aliveEnemies === 0 && !bossExists && !gameVictory) {
-        // Spawn do Boss
+    if (!gameStarted || showLevelUp || gameVictory) return;
+    
+    const aliveEnemies = enemies.filter((e) => e.hp > 0).length;
+    const bossExists = enemies.some(e => e.type === 3);
+
+    // Se não houver inimigos vivos e não estamos no fim do jogo
+    if (aliveEnemies === 0) {
+      if (level < 3) {
+        // Níveis 1 e 2: Mostra o Level Up
+        setShowLevelUp(true);
+      } else if (level === 3 && !bossExists) {
+        // Nível 3: Spawn do Boss após os 5 ninjas morrerem
         const boss = {
           id: "THE-BOSS",
           x: -300,
@@ -196,13 +198,11 @@ function App() {
           type: 3
         };
         setEnemies([boss]);
-        
-        // Troca de música
         if (levelAudioRef.current) levelAudioRef.current.pause();
         if (bossAudioRef.current) bossAudioRef.current.play().catch(() => {});
       }
     }
-  }, [enemies, level, gameStarted, gameVictory]);
+  }, [enemies, level, gameStarted, showLevelUp, gameVictory]);
 
   const applyPowerUpAndNextLevel = (type) => {
     if (type === "stamina") setMaxStamina(150);
@@ -214,12 +214,13 @@ function App() {
     setEnemies(generateEnemies(nextLvl));
     setHp(type === "health" ? 150 : maxHp);
     setStamina(type === "stamina" ? 150 : maxStamina);
+    setShurikens([]);
     setShowLevelUp(false);
     setPos(window.innerWidth / 2 - 50);
     setPosY(0);
   };
 
-  // --- REGEN E FÍSICA ---
+  // --- REGEN E FÍSICA (SEM ALTERAÇÕES) ---
   useEffect(() => {
     if (!gameStarted || hp <= 0 || showLevelUp || gameVictory) return;
     const reg = setInterval(() => {
@@ -302,8 +303,6 @@ function App() {
           if (enemy.hp <= 0 && enemy.type !== 3) return enemy;
 
           const tempoAgora = Date.now();
-          
-          // Animações dos Inimigos
           if (tempoAgora - enemy.lastFrameUpdate > 100) {
             let nextFrame = enemy.currentFrame;
             if (enemy.type === 3) {
@@ -328,7 +327,6 @@ function App() {
           if (nX > window.innerWidth - 100) nDir = -1;
           if (nX < -100) nDir = 1;
 
-          // Dano no Bashira por Colisão
           const dist = Math.abs(nX - posRef.current);
           if (dist < (enemy.type === 3 ? 120 : 65) && posYRef.current < 100) {
              if (enemy.type === 3 && !enemy.isDying) {
@@ -341,7 +339,6 @@ function App() {
              enemy.isAttacking = false;
           }
 
-          // Colisão com Shuriken
           const coll = shurikens.find((s) => s.x > nX - 20 && s.x < nX + (enemy.type === 3 ? 150 : 80));
           if (coll && !hitShurikenIds.includes(coll.id) && !enemy.isDying) {
             hitShurikenIds.push(coll.id);
@@ -349,7 +346,6 @@ function App() {
             
             if (nHp <= 0) {
                if (enemy.type === 3) {
-                  // Morte do Boss
                   if (bossAudioRef.current) bossAudioRef.current.pause();
                   if (levelVictoryRef.current) levelVictoryRef.current.play();
                   setTimeout(() => setGameVictory(true), 10000);
@@ -372,7 +368,7 @@ function App() {
     return () => clearInterval(engine);
   }, [gameStarted, showLevelUp, gameVictory, shurikens, level]);
 
-  // --- ANIMAÇÕES BASHIRA ---
+  // --- ANIMAÇÕES (SEM ALTERAÇÕES) ---
   useEffect(() => {
     const anim = setInterval(() => setIdleFrame((prev) => (prev === 1 ? 2 : 1)), 500);
     return () => clearInterval(anim);
